@@ -2,6 +2,7 @@ from itertools import cycle, islice
 import aniso8601
 import datetime
 import numpy as np
+import ccd.change as change
 
 from ccd.models import lasso
 from itertools import cycle, islice
@@ -83,8 +84,10 @@ def repeated_values(samples, seed=42):
 
 def test_not_enough_observations():
     acquired = acquisition_delta('R15/P16D/2000-01-01')
-    observes = repeated_values(15)
-    assert len(acquired) == len(observes) == 15
+    observed = repeated_values(15)
+    assert len(acquired) == len(observed) == 15
+    models = change.detect(acquired, observed, None, None)
+    assert len(models) == 0
 
 
 def test_enough_observations():
