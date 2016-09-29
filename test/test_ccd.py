@@ -1,4 +1,5 @@
 from itertools import cycle, islice
+import random
 import aniso8601
 import datetime
 import numpy as np
@@ -106,11 +107,31 @@ def test_enough_observations():
     assert len(models[0]) == 7
 
 
+def test_change_windows(n=50, meow_size=16, peek_size=3):
+    times = acquisition_delta('R{0}/P16D/2000-01-01'.format(n))
+    reds = repeated_values(n)
+    greens = repeated_values(n)
+    blues = repeated_values(n)
+    # nir = repeated_values(20)
+    # swir1 = repeated_values(20)
+    # swir2 = repeated_values(20)
+    # thermal = repeated_values(20)
+    observations = np.array([reds, greens, blues])
+    fitter_fn = lasso.fitted_model
+    models = change.detect(times, observations, fitter_fn, None,
+                           meow_size=meow_size, peek_size=peek_size)
+    assert len(models) == n - meow_size - peek_size + 2
+
+
 def test_two_changes_during_time():
-    acquired = acquisition_delta('R50/P16D/2000-01-01')
-    observes = np.hstack((repeated_values(25) + 10,
-                          repeated_values(25) + 50))
-    assert len(acquired) == len(observes) == 50
+    times = acquisition_delta('R50/P16D/2000-01-01')
+
+    reds = np.hstack((repeated_values(25) + 10,
+                      repeated_values(25) + 50))
+    fitter_fn = lasso.fitted_model
+    models = change.detect(times, reds, fitter_fn, None)
+
+    assert len(models) == 2
 
 
 def test_three_changes_during_time():

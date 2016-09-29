@@ -57,6 +57,8 @@ def regress(observation):
 #     """Runs the core ccd algorithm to detect change in the supplied data
 #     """
 #     [regress(o) for o in sorted(observations, reverse=True)]
+def unchanged(models, peek_values, change_detect_fn):
+    return any([change_detect_fn(model, peek_values[ix]) for ix, model in enumerate(models)])
 
 
 def detect(times, observations, fitter_fn, change_detect_fn, meow_size=16, peek_size=3):
@@ -83,17 +85,16 @@ def detect(times, observations, fitter_fn, change_detect_fn, meow_size=16, peek_
     # with a value of the array index, the new model's start.
     start_ix = 0
 
-    # Array index of where to begin peeking at new observations.
-    # Initially, this is the end minimum expected observation
-    # window.
-    peek_ix = meow_size
-
     # Result accumulator. Each observation of each spectra has an
     # updated model.
     results = []
 
     # There are more observations to consider
     while start_ix + meow_size <= len(times):
+        # Array index of where to begin peeking at new observations.
+        # Initially, this is the end minimum expected observation
+        # window.
+        peek_ix = start_ix + meow_size
 
         # Build a model for each spectra
         window = times[start_ix:meow_size]
@@ -108,15 +109,22 @@ def detect(times, observations, fitter_fn, change_detect_fn, meow_size=16, peek_
 
         # Update models while things appear stable, none of the
         # spectra's peek-windows exhibit change.
-        while False: # every_spectra_stable(models, change_detect_fn):
-            # update each spectra's model with peeked values
-            # slide the window (increase peek_ix by one)
-            # capture model
-            updated_models = []
-            results.append(updated_models)
+        while peek_ix + peek_size <= len(times):
+            peek_values = observations[:, peek_ix:peek_ix + peek_size]
 
+            if unchanged(models, peek_values, change_detect_fn):
+                # update each spectra's model with peeked values
+                # slide the window (increase peek_ix by one)
+                # capture model
+                updated_models = []#[fitter_fn(peek_values, spectrum) for spectrum in spectra]
+                results.append(updated_models)
+
+                peek_ix += 1
+            else:
+                start_ix = peek_ix
+
+                break
         break
-
         # ...a change has been detected:
         # - set the new starting index
         # - set the peek index
