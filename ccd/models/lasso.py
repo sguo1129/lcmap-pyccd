@@ -25,7 +25,7 @@ def coefficient_matrix(observation_dates):
     return matrix
 
 
-@lru_cache(maxsize=128, typed=True)
+# @lru_cache(maxsize=128, typed=True)
 def partial_model(observation_dates):
     """Return a partial model with coefficients ready for fitting.
 
