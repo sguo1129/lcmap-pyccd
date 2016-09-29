@@ -64,7 +64,7 @@ def detect(times, observations, fitter_fn, change_detect_fn, meow_size=16, peek_
 
     Args:
         observations: a list of acquisition day numbers, and a list
-            for each spectra.
+            of spectral values and QA for each day.
         fitter: a function used to fit observation values and
             acquisition dates for each spectra.
         changer: a function used to detect change; expects a model
@@ -92,16 +92,16 @@ def detect(times, observations, fitter_fn, change_detect_fn, meow_size=16, peek_
     # updated model.
     models = []
 
-    while False: # there are more observations to consider
+    # There are more observations to consider
+    while start_ix + meow_size <= len(times):
 
         # Build a model for each spectra
-        times = times[start_ix:meow_size]
-        values = observations[:,start_ix:meow_size]
+        window = times[start_ix:meow_size]
+        spectra = observations[:,start_ix:meow_size]
 
         # If there are enough observations
-        if len(meow_values) >= meow_size:
-            for spectra in observations:
-                model = fitted_model(meow_times, spectra)
+        if len(window) >= meow_size:
+            models = [fitter_fn(window,spectrum) for spectrum in spectra]
         else:
             return results
 
@@ -112,6 +112,8 @@ def detect(times, observations, fitter_fn, change_detect_fn, meow_size=16, peek_
             # slide the window (increase peek_ix by one)
             # capture model
             results.append(model)
+
+        break
 
         # ...a change has been detected:
         # - set the new starting index

@@ -91,9 +91,19 @@ def test_not_enough_observations():
 
 
 def test_enough_observations():
-    acquired = acquisition_delta('R16/P16D/2000-01-01')
-    observes = repeated_values(16)
-    assert len(acquired) == len(observes) == 16
+    times = acquisition_delta('R16/P16D/2000-01-01')
+    reds = repeated_values(16)
+    greens = repeated_values(16)
+    blues = repeated_values(16)
+    nir = repeated_values(16)
+    swir1 = repeated_values(16)
+    swir2 = repeated_values(16)
+    thermal = repeated_values(16)
+    observations = np.array([reds, greens, blues, nir, swir1, swir2, thermal])
+    fitter_fn = lasso.fitted_model
+    models = change.detect(times, observations, fitter_fn, None)
+    print(len(models))
+    assert len(models) == 7
 
 
 def test_two_changes_during_time():
