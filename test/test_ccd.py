@@ -102,8 +102,8 @@ def test_enough_observations():
     observations = np.array([reds, greens, blues, nir, swir1, swir2, thermal])
     fitter_fn = lasso.fitted_model
     models = change.detect(times, observations, fitter_fn, None)
-    print(len(models))
-    assert len(models) == 7
+    assert len(models) == 1
+    assert len(models[0]) == 7
 
 
 def test_two_changes_during_time():

@@ -90,7 +90,7 @@ def detect(times, observations, fitter_fn, change_detect_fn, meow_size=16, peek_
 
     # Result accumulator. Each observation of each spectra has an
     # updated model.
-    models = []
+    results = []
 
     # There are more observations to consider
     while start_ix + meow_size <= len(times):
@@ -102,16 +102,18 @@ def detect(times, observations, fitter_fn, change_detect_fn, meow_size=16, peek_
         # If there are enough observations
         if len(window) >= meow_size:
             models = [fitter_fn(window,spectrum) for spectrum in spectra]
+            results.append(models)
         else:
             return results
 
         # Update models while things appear stable, none of the
         # spectra's peek-windows exhibit change.
-        while False:
+        while False: # every_spectra_stable(models, change_detect_fn):
             # update each spectra's model with peeked values
             # slide the window (increase peek_ix by one)
             # capture model
-            results.append(model)
+            updated_models = []
+            results.append(updated_models)
 
         break
 
@@ -119,4 +121,4 @@ def detect(times, observations, fitter_fn, change_detect_fn, meow_size=16, peek_
         # - set the new starting index
         # - set the peek index
 
-    return models
+    return results
