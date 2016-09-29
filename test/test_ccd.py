@@ -8,7 +8,6 @@ import ccd.change as change
 from ccd.models import lasso
 from itertools import cycle, islice
 
-
 # Test data generators for change detection.
 
 def gen_acquisition_dates(interval):
@@ -102,7 +101,8 @@ def test_enough_observations():
     thermal = repeated_values(16)
     observations = np.array([reds, greens, blues, nir, swir1, swir2, thermal])
     fitter_fn = lasso.fitted_model
-    models = change.detect(times, observations, fitter_fn, None)
+    change_fn = change.change_detector
+    models = change.detect(times, observations, fitter_fn, change_fn)
     assert len(models) == 1
     assert len(models[0]) == 7
 
@@ -112,31 +112,30 @@ def test_change_windows(n=50, meow_size=16, peek_size=3):
     reds = repeated_values(n)
     greens = repeated_values(n)
     blues = repeated_values(n)
-    # nir = repeated_values(20)
-    # swir1 = repeated_values(20)
-    # swir2 = repeated_values(20)
-    # thermal = repeated_values(20)
     observations = np.array([reds, greens, blues])
     fitter_fn = lasso.fitted_model
-    models = change.detect(times, observations, fitter_fn, None,
+    change_fn = change.change_detector
+    models = change.detect(times, observations, fitter_fn, change_fn,
                            meow_size=meow_size, peek_size=peek_size)
     assert len(models) == n - meow_size - peek_size + 2
-
 
 def test_two_changes_during_time():
     times = acquisition_delta('R50/P16D/2000-01-01')
 
-    reds = np.hstack((repeated_values(25) + 10,
+    reds = np.hstack((repeated_values(50) + 10,
                       repeated_values(25) + 50))
-    fitter_fn = lasso.fitted_model
-    models = change.detect(times, reds, fitter_fn, None)
+    observations = np.array([reds])
 
+    fitter_fn = lasso.fitted_model
+    change_fn = change.change_detector
+
+    models = change.detect(times, observations, fitter_fn, change_fn)
     assert len(models) == 2
 
 
-def test_three_changes_during_time():
-    acquired = acquisition_delta('R90/P16D/2000-01-01')
-    observes = np.hstack((repeated_values(30) + 10,
-                          repeated_values(30) + 50,
-                          repeated_values(30) + 10))
-    assert len(acquired) == len(observes) == 90
+# def test_three_changes_during_time():
+#     acquired = acquisition_delta('R90/P16D/2000-01-01')
+#     observes = np.hstack((repeated_values(30) + 10,
+#                           repeated_values(30) + 50,
+#                           repeated_values(30) + 10))
+#     assert len(acquired) == len(observes) == 90

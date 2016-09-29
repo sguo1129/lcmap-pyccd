@@ -53,12 +53,12 @@ def regress(observation):
     pass
 
 
-# def detect(observations):
-#     """Runs the core ccd algorithm to detect change in the supplied data
-#     """
-#     [regress(o) for o in sorted(observations, reverse=True)]
+def change_detector(model, peek_values):
+    """Detect change outside of tolerance"""
+    return False
+
 def unchanged(models, peek_values, change_detect_fn):
-    return any([change_detect_fn(model, peek_values[ix]) for ix, model in enumerate(models)])
+    return not any([change_detect_fn(model, peek_values[ix]) for ix, model in enumerate(models)])
 
 
 def detect(times, observations, fitter_fn, change_detect_fn, meow_size=16, peek_size=3):
@@ -107,26 +107,20 @@ def detect(times, observations, fitter_fn, change_detect_fn, meow_size=16, peek_
         else:
             return results
 
-        # Update models while things appear stable, none of the
-        # spectra's peek-windows exhibit change.
+        # Update models while things appear stable (i.e. none of the
+        # observation spectra peek-windows exhibit change).
         while peek_ix + peek_size <= len(times):
             peek_values = observations[:, peek_ix:peek_ix + peek_size]
 
-            if unchanged(models, peek_values, change_detect_fn):
-                # update each spectra's model with peeked values
-                # slide the window (increase peek_ix by one)
-                # capture model
-                updated_models = []#[fitter_fn(peek_values, spectrum) for spectrum in spectra]
+            if unchanged(models, peek_values, change_detector):
+                updated_models = [] # [fitter_fn(peek_values, spectrum) for spectrum in spectra]
                 results.append(updated_models)
-
                 peek_ix += 1
+
             else:
                 start_ix = peek_ix
-
                 break
+
         break
-        # ...a change has been detected:
-        # - set the new starting index
-        # - set the peek index
 
     return results
