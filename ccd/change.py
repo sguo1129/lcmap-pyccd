@@ -55,17 +55,19 @@ def regress(observation):
 
 
 def tolerable_error(model):
-    """Detect models with RMSE above threshold."""
+    """Detect models with RMSE above threshold???"""
+    ### TODO
     return True
 
 
 def stable(models):
     """Is the RMSE of every model below a threshold?"""
-    return [tolerable_error(model) for ix, model in enumerate(models)]
+    return [tolerable_error(model) for model in models]
 
 
 def change_detector(model, peek_values):
     """Detect change outside of tolerance"""
+    # TODO
     return True
 
 
