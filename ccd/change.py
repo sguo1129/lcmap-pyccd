@@ -89,36 +89,48 @@ def detect(times, observations, fitter_fn, change_detect_fn, meow_size=16, peek_
     # updated model.
     results = []
 
+    # Array index of where to begin peeking at new observations.
+    # Initially, this is the minimum expected observation window,
+    # (meow_size).
+    peek_ix = start_ix + meow_size
+
     # There are more observations to consider
-    while start_ix + meow_size <= len(times):
-        # Array index of where to begin peeking at new observations.
-        # Initially, this is the end minimum expected observation
-        # window.
-        peek_ix = start_ix + meow_size
+    while (start_ix + meow_size) <= len(times):
 
         # Build a model for each spectra
-        window = times[start_ix:meow_size]
+        moments = times[start_ix:meow_size]
         spectra = observations[:,start_ix:meow_size]
 
-        # If there are enough observations
-        if len(window) >= meow_size:
-            models = [fitter_fn(window,spectrum) for spectrum in spectra]
+        # If there are enough observations, fit the model.
+        if len(moments) >= meow_size:
+            models = [fitter_fn(moments,spectrum) for spectrum in spectra]
             results.append(models)
         else:
-            return results
+            break
 
         # Update models while things appear stable (i.e. none of the
         # observation spectra peek-windows exhibit change).
-        while peek_ix + peek_size <= len(times):
-            peek_values = observations[:, peek_ix:peek_ix + peek_size]
-
+        while (peek_ix+peek_size) <= len(times):
+            # If the models for all spectra appear unchanged, then run the
+            # fitting function using a window that extends into the peeked
+            # observations.
+            peek_values = observations[:, peek_ix:peek_ix+peek_size]
             if unchanged(models, peek_values, change_detector):
-                updated_models = [] # [fitter_fn(peek_values, spectrum) for spectrum in spectra]
-                results.append(updated_models)
+                # TODO (jmorton) determine how to handle outliers.
+                moments = times[start_ix:(peek_ix+peek_size)]
+                spectra = observations[:, start_ix:(peek_ix+peek_size)]
+                updates = [fitter_fn(moments, spectrum) for spectrum in spectra]
+                results.append(updates)
                 peek_ix += 1
+                print("continue existing time segment: {} {}".format(start_ix,peek_ix+peek_size))
+                continue
 
+            # Otherwise, if any spectra's peeked values appear to change, begin
+            # a new segment starting at the peeked index. The
             else:
                 start_ix = peek_ix
+                peek_ix = start_ix + meow_size
+                print("begin new time segment: {} {}".format(start_ix,peek_ix+peek_size))
                 break
 
         break

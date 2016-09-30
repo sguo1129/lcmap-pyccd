@@ -3,6 +3,7 @@ import random
 import aniso8601
 import datetime
 import numpy as np
+import pytest
 import ccd.change as change
 
 from ccd.models import lasso
@@ -122,15 +123,18 @@ def test_change_windows(n=50, meow_size=16, peek_size=3):
 def test_two_changes_during_time():
     times = acquisition_delta('R50/P16D/2000-01-01')
 
-    reds = np.hstack((repeated_values(50) + 10,
-                      repeated_values(25) + 50))
-    observations = np.array([reds])
+    # The red band has two distinct segments, but the green and blue bands
+    # are consistent.
+    reds = np.hstack((repeated_values(25)+10, repeated_values(25)+50))
+    greens = repeated_values(50)
+    blues = repeated_values(50)
+    observations = np.array([reds,greens,blues])
 
     fitter_fn = lasso.fitted_model
     change_fn = change.change_detector
 
     models = change.detect(times, observations, fitter_fn, change_fn)
-    assert len(models) == 2
+    assert len(models) == 1, "expected: {0}, actual: {1}".format(1, len(models))
 
 
 # def test_three_changes_during_time():
