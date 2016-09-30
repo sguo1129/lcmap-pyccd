@@ -1,5 +1,4 @@
 from collections import namedtuple
-import pytest
 
 """Comprehensive data model of the domain is captured in detections,
 observation and observations.  Do not modify these data models unless the
@@ -54,23 +53,26 @@ def in_expected_range():
 def regress(observation):
     pass
 
-def error_detector(model):
+
+def tolerable_error(model):
     """Detect models with RMSE above threshold."""
     return True
 
+
 def stable(models):
     """Is the RMSE of every model below a threshold?"""
-    # return [True for model in models]
-    return [error_detector(model) for ix, model in enumerate(models)]
+    return [tolerable_error(model) for ix, model in enumerate(models)]
+
 
 def change_detector(model, peek_values):
     """Detect change outside of tolerance"""
     return True
 
+
 def accurate(models, moments, spectra):
     """Detect spectral values that do not conform to the model"""
-    # return [True for model in models]
     return [change_detector(model, spectra[ix]) for ix, model in enumerate(models)]
+
 
 def detect(times, observations, fitter_fn, meow_size=16, peek_size=3, keep_all=False):
     """Runs the core ccd algorithm to detect change in the supplied data
@@ -112,7 +114,7 @@ def detect(times, observations, fitter_fn, meow_size=16, peek_size=3, keep_all=F
 
             moments = times[meow_ix:meow_ix + meow_size]
             spectra = observations[:, meow_ix:meow_ix + meow_size]
-            models = [fitter_fn(moments,spectrum) for spectrum in spectra]
+            models = [fitter_fn(moments, spectrum) for spectrum in spectra]
             results.append(models)
 
             if not all(stable(models)):
@@ -128,7 +130,7 @@ def detect(times, observations, fitter_fn, meow_size=16, peek_size=3, keep_all=F
         # Step 2: EXTENSION.
         # The second step is to update a model until observations that do not
         # fit the model are found.
-        while (peek_ix+peek_size) < len(times):
+        while (peek_ix+peek_size) <= len(times):
 
             next_moments = times[meow_ix:peek_ix + peek_size]
             next_spectra = observations[:, meow_ix:peek_ix + peek_size]

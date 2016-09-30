@@ -1,15 +1,11 @@
 from itertools import cycle, islice
-import random
 import aniso8601
 import datetime
 import numpy as np
-import pytest
 import ccd.change as change
 
 from ccd.models import lasso
-from itertools import cycle, islice
 
-# Test data generators for change detection.
 
 def gen_acquisition_dates(interval):
     """Generate acquisition dates for an ISO8601 interval.
@@ -48,6 +44,7 @@ def gen_acquisition_delta(interval):
 def read_csv_sample(path):
     """Load a sample file containing acquisition days and spectral values"""
     return np.genfromtxt('test/resources/sample_1.csv', delimiter=',')
+
 
 def acquisition_delta(interval):
     """List of delta in days for an interval
@@ -101,7 +98,6 @@ def test_enough_observations():
     blues = repeated_values(16)
     observations = np.array([reds, greens, blues])
     fitter_fn = lasso.fitted_model
-    change_fn = change.change_detector
     models = change.detect(times, observations, fitter_fn)
     assert len(models) == 1, "actual: {}, expected: {}".format(len(models), 1)
     assert len(models[0]) == 3, "actual: {}, expected: {}".format(len(models[0]), 3)
@@ -115,7 +111,9 @@ def test_change_windows(n=50, meow_size=16, peek_size=3):
     observations = np.array([reds, greens, blues])
     fitter_fn = lasso.fitted_model
     models = change.detect(times, observations, fitter_fn, meow_size=meow_size, peek_size=peek_size)
-    # assert len(models) == n - meow_size - peek_size + 2
+    expected = n - meow_size - peek_size + 2
+    assert len(models) == expected, "actual: {}, expected: {}".format(len(models), expected)
+
 
 def test_two_changes_during_time():
     times = acquisition_delta('R50/P16D/2000-01-01')
@@ -125,7 +123,7 @@ def test_two_changes_during_time():
     reds = np.hstack((repeated_values(25)+10, repeated_values(25)+50))
     greens = repeated_values(50)
     blues = repeated_values(50)
-    observations = np.array([reds,greens,blues])
+    observations = np.array([reds, greens, blues])
 
     fitter_fn = lasso.fitted_model
 
