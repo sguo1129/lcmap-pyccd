@@ -19,8 +19,8 @@ def coefficient_matrix(observation_dates):
     # c4 = np.ones(len(c1))
 
     matrix = np.ones(shape=(len(observation_dates), 4))
-    matrix[:, 0] = [np.sin(t/365.25) for t in observation_dates]
-    matrix[:, 1] = [np.cos(t/365.25) for t in observation_dates]
+    matrix[:, 0] = [np.sin(2*np.pi*t/365.25) for t in observation_dates]
+    matrix[:, 1] = [np.cos(2*np.pi*t/365.25) for t in observation_dates]
     matrix[:, 2] = [t for t in observation_dates]
     return matrix
 
