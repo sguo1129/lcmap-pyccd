@@ -1,7 +1,6 @@
 from sklearn import linear_model
 import numpy as np
 from functools import partial
-from functools import lru_cache
 
 
 def coefficient_matrix(observation_dates):

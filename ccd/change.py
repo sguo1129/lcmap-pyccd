@@ -1,4 +1,6 @@
 from collections import namedtuple
+import numpy as np
+from ccd.models import lasso
 
 """Comprehensive data model of the domain is captured in detections,
 observation and observations.  Do not modify these data models unless the
@@ -54,16 +56,19 @@ def regress(observation):
     pass
 
 
-def tolerable_error(model):
-    """Detect models with RMSE above threshold???"""
-    ### TODO
-    return True
+def rmse(models, moments, spectra):
+    """Is the RMSE of every model below a threshold???"""
+    errors = []
+    for model, observed in zip(models, spectra):
+        matrix = lasso.coefficient_matrix(moments)
+        predictions = model.predict(matrix)
+        error = np.linalg.norm(predictions - observed) / np.sqrt(len(predictions))
+        errors.append(error)
+    return errors
 
-
-def stable(models):
-    """Is the RMSE of every model below a threshold?"""
-    return [tolerable_error(model) for model in models]
-
+def stable(models, moments, spectra):
+    """Potatoe!!!"""
+    return all([error < 42 for error in rmse(models, moments, spectra)])
 
 def change_detector(model, peek_values):
     """Detect change outside of tolerance"""
@@ -111,6 +116,9 @@ def detect(times, observations, fitter_fn, meow_size=16, peek_size=3, keep_all=F
         # Step 1: INITIALIZATION.
         # The first step is to generate a model that is stable using only
         # the minimum number of observations.
+        # TOD0 (jmorton): determine how time factors into window; is it
+        #      necessary to have a minimm number of observations AND
+        #      an entire year of data?
         while (meow_ix+meow_size) <= len(times):
 
             moments = times[meow_ix:meow_ix + meow_size]
@@ -118,7 +126,7 @@ def detect(times, observations, fitter_fn, meow_size=16, peek_size=3, keep_all=F
             models = [fitter_fn(moments, spectrum) for spectrum in spectra]
             results.append(models)
 
-            if not all(stable(models)):
+            if not stable(models, moments, spectra):
                 meow_ix += 1
             else:
                 break
