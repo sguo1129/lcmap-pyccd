@@ -2,59 +2,6 @@ from collections import namedtuple
 import numpy as np
 from ccd.models import lasso
 
-"""Comprehensive data model of the domain is captured in detections,
-observation and observations.  Do not modify these data models unless the
-actual domain changes.  Data filtering & transformation should take place
-in another module AFTER the functions in change.py have run... as
-post-processing steps
-"""
-# this and all other parameters for the model go into ~/.config/ccd_config.py
-# minimum_clear_observation_count = 12
-#
-# 2 for tri-modal; 2 for bi-modal; 2 for seasonality; 2 for linear
-# coefficient_categories = {min:4, mid:6, max:8}
-#
-# number of clear observation / number of coefficients
-# clear_observation_threshold = 3
-#
-# qa_confidence_failure_threshold = 0.25
-# permanent_snow_threshold = 0.75
-
-
-detections = namedtuple("Detections", ['is_change', 'is_outlier',
-                                       'rmse', 'magnitude',
-                                       'is_curve_start',
-                                       'is_curve_end',
-                                       'coefficients',
-                                       'category'])
-
-observation = namedtuple('Observation', ['coastal_aerosol', 'red', 'green',
-                                         'blue', 'nir', 'swir1',
-                                         'swir2', 'panchromatic',
-                                         'is_cloud', 'is_clear', 'is_snow',
-                                         'is_fill', 'is_water',
-                                         'qa_confidence'])
-
-observations = namedtuple('Observations', ['date',
-                                           'observation',
-                                           'detections'])
-
-
-def is_change():
-    pass
-
-
-def is_outlier():
-    pass
-
-
-def in_expected_range():
-    pass
-
-
-def regress(observation):
-    pass
-
 
 def rmse(models, moments, spectra):
     """Is the RMSE of every model below a threshold???"""
@@ -66,19 +13,30 @@ def rmse(models, moments, spectra):
         errors.append(error)
     return errors
 
+
 def stable(models, moments, spectra):
-    """Potatoe!!!"""
-    return all([error < 42 for error in rmse(models, moments, spectra)])
-
-def change_detector(model, peek_values):
-    """Detect change outside of tolerance"""
-    # TODO
-    return True
+    """"""
+    errors = rmse(models, moments, spectra)
+    print("rmse: {0}".format(errors))
+    return not any([e > 2.0 for e in errors])
 
 
-def accurate(models, moments, spectra):
+def magnitudes(models, moments, spectra):
+    """Calculate change magnitudes for each model and spectra"""
+    magnitudes = []
+    for model, observed in zip(models, spectra):
+        matrix = lasso.coefficient_matrix(moments)
+        predicted = model.predict(matrix)
+        magnitude = np.linalg.norm((predicted-observed), ord=2)
+        magnitudes.append(magnitude)
+    return magnitudes
+
+
+def accurate(models, moments, spectra, threshold=0.99):
     """Detect spectral values that do not conform to the model"""
-    return [change_detector(model, spectra[ix]) for ix, model in enumerate(models)]
+    ms = magnitudes(models, moments, spectra)
+    print("mags: {0}".format(ms))
+    return not any([m > threshold for m in ms])
 
 
 def detect(times, observations, fitter_fn, meow_size=16, peek_size=3, keep_all=False):
@@ -124,7 +82,6 @@ def detect(times, observations, fitter_fn, meow_size=16, peek_size=3, keep_all=F
             moments = times[meow_ix:meow_ix + meow_size]
             spectra = observations[:, meow_ix:meow_ix + meow_size]
             models = [fitter_fn(moments, spectrum) for spectrum in spectra]
-            results.append(models)
 
             if not stable(models, moments, spectra):
                 meow_ix += 1
@@ -144,11 +101,10 @@ def detect(times, observations, fitter_fn, meow_size=16, peek_size=3, keep_all=F
             next_moments = times[meow_ix:peek_ix + peek_size]
             next_spectra = observations[:, meow_ix:peek_ix + peek_size]
 
-            if all(accurate(models, next_moments, next_spectra)):
+            if accurate(models, next_moments, next_spectra):
                 moments = times[meow_ix:peek_ix + peek_size]
                 spectra = observations[:, meow_ix:peek_ix + peek_size]
                 models = [fitter_fn(moments, spectrum) for spectrum in spectra]
-                results.append(models)
                 peek_ix += 1
             else:
                 break
@@ -156,6 +112,7 @@ def detect(times, observations, fitter_fn, meow_size=16, peek_size=3, keep_all=F
         # After exhausting observations that fit the initialized models,
         # reposition the meow_ix to the starting point of the look-ahead
         # so that initialization can begin again.
+        results.append(models)
         meow_ix = peek_ix
 
     return results

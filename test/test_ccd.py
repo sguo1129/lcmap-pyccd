@@ -1,4 +1,3 @@
-from itertools import cycle, islice
 import aniso8601
 import datetime
 import numpy as np
@@ -73,32 +72,29 @@ def read_csv_sample(path):
     return np.genfromtxt('test/resources/sample_1.csv', delimiter=',')
 
 
-def sinusoid(samples, frequency=1, amplitude=1, seed=42):
+def sinusoid(times, frequency=1, amplitude=0.1, seed=42):
     """Produce a sinusoidal wave for testing data"""
     np.random.seed(seed)
-    stop = 2 * np.pi * frequency
-    xs = np.linspace(0, stop, samples)
-    ys = np.array([np.sin(x) * amplitude for x in xs])
-    return np.array(list([y + np.random.normal() for y in ys]))
+    xs = times
+    ys = np.array([np.sin(2*np.pi*x/365.2)*amplitude for x in xs])
+    return np.array(list([y for y in ys]))
 
 
 def test_not_enough_observations():
-    acquired = acquisition_delta('R15/P16D/2000-01-01')
-    reds = sinusoid(15)
-    greens = sinusoid(15)
-    blues = sinusoid(15)
-    observations = np.array([reds, greens, blues])
+    times = acquisition_delta('R15/P16D/2000-01-01')
+    reds = sinusoid(times)
+    observations = np.array([reds])
     fitter_fn = lasso.fitted_model
-    models = change.detect(acquired, observations, fitter_fn)
+    models = change.detect(times, observations, fitter_fn)
     assert len(models) == 0
 
 
 def test_enough_observations():
     times = acquisition_delta('R16/P16D/2000-01-01')
-    reds = sinusoid(16)
-    greens = sinusoid(16)
-    blues = sinusoid(16)
-    observations = np.array([reds, greens, blues])
+    reds = sinusoid(times)
+    blues = sinusoid(times)
+    greens = sinusoid(times)
+    observations = np.array([reds,blues,greens])
     fitter_fn = lasso.fitted_model
     models = change.detect(times, observations, fitter_fn)
     assert len(models) == 1, "actual: {}, expected: {}".format(len(models), 1)
@@ -107,21 +103,36 @@ def test_enough_observations():
 
 def test_change_windows(n=50, meow_size=16, peek_size=3):
     times = acquisition_delta('R{0}/P16D/2000-01-01'.format(n))
-    reds = sinusoid(n)
-    greens = sinusoid(n)
-    blues = sinusoid(n)
+    reds = sinusoid(times)
+    greens = sinusoid(times)
+    blues = sinusoid(times)
     observations = np.array([reds, greens, blues])
     fitter_fn = lasso.fitted_model
     models = change.detect(times, observations, fitter_fn, meow_size=meow_size, peek_size=peek_size)
-    expected = n - meow_size - peek_size + 2
+    # If we only accumulate stable models...
+    expected = 1 # model
+    # If we accumulate all steps...
+    # expected = n - meow_size - peek_size + 2
     assert len(models) == expected, "actual: {}, expected: {}".format(len(models), expected)
+
+
+def testing_an_unstable_initial_period():
+    times = acquisition_delta('R50/P16D/2000-01-01')
+    reds = np.hstack((sinusoid(times[0:10])+10, sinusoid(times[10:50])+50))
+    blues = np.hstack((sinusoid(times[0:10])+10, sinusoid(times[10:50])+50))
+    greens = np.hstack((sinusoid(times[0:10])+10, sinusoid(times[10:50])+50))
+    observations = np.array([reds, blues, greens])
+    fitter_fn = lasso.fitted_model
+
+    models = change.detect(times, observations, fitter_fn)
+    assert len(models) == 1, "expected: {0}, actual: {1}".format(1, len(models))
 
 
 def test_two_changes_during_time():
     times = acquisition_delta('R50/P16D/2000-01-01')
-    reds = np.hstack((sinusoid(25)+10, sinusoid(25)+50))
-    greens = sinusoid(50)
-    blues = sinusoid(50)
+    reds = np.hstack((sinusoid(times[0:25])+10, sinusoid(times[25:50])+50))
+    greens = sinusoid(times)
+    blues = sinusoid(times)
     observations = np.array([reds, greens, blues])
     fitter_fn = lasso.fitted_model
 
@@ -129,9 +140,13 @@ def test_two_changes_during_time():
     assert len(models) == 2, "expected: {0}, actual: {1}".format(2, len(models))
 
 
-# def test_three_changes_during_time():
-#     acquired = acquisition_delta('R90/P16D/2000-01-01')
-#     observes = np.hstack((repeated_values(30) + 10,
-#                           repeated_values(30) + 50,
-#                           repeated_values(30) + 10))
-#     assert len(acquired) == len(observes) == 90
+def test_three_changes_during_time():
+    times = acquisition_delta('R90/P16D/2000-01-01')
+    reds = np.hstack((sinusoid(times[0:30])  + 10,
+                      sinusoid(times[30:60]) + 50,
+                      sinusoid(times[60:90]) + 10))
+    observations = np.array([reds])
+    fitter_fn = lasso.fitted_model
+
+    models = change.detect(times, observations, fitter_fn)
+    assert len(models) == 3
