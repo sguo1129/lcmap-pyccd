@@ -128,7 +128,7 @@ def test_two_changes_during_time():
     fitter_fn = lasso.fitted_model
 
     models = change.detect(times, observations, fitter_fn)
-    assert len(models) == 1, "expected: {0}, actual: {1}".format(1, len(models))
+    assert len(models) == 2, "expected: {0}, actual: {1}".format(2, len(models))
 
 
 # def test_three_changes_during_time():

@@ -93,19 +93,18 @@ def detect(times, observations, fitter_fn, meow_size=16, peek_size=3, keep_all=F
         Change models for each observation of each spectra.
     """
 
-    # Array index of starting point for initialization.
-    meow_ix = 0
-
-    # Result accumulator.
+    # Accumulator for models. This is a list of lists; each top-level list
+    # corresponds to a particular spectra.
     results = []
 
-    # Only build models as long as sufficient data exists.
+    # The starting point for initialization. Used to as reference point for
+    # taking a range of times and spectral values.
+    meow_ix = 0
+
+    # Only build models as long as sufficient data exists. The observation
+    # window starts at meow_ix and is fixed until the change model no longer
+    # fits new observations, i.e. a change is detected.
     while (meow_ix+meow_size) <= len(times):
-
-        # DEBUGGING? Use `pytest.set_trace()`
-
-        # Initially, there are no models.
-        models = None
 
         # Step 1: INITIALIZATION.
         # The first step is to generate a model that is stable using only
