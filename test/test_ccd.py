@@ -73,18 +73,20 @@ def read_csv_sample(path):
     return np.genfromtxt('test/resources/sample_1.csv', delimiter=',')
 
 
-def repeated_values(samples, seed=42):
+def sinusoid(samples, frequency=1, amplitude=1, seed=42):
+    """Produce a sinusoidal wave for testing data"""
     np.random.seed(seed)
-    sine = np.array(list(islice(cycle([0, 1, 0, -1]), None, samples)))
-    noise = np.array(np.random.random(samples))
-    return sine+noise
+    stop = 2 * np.pi * frequency
+    xs = np.linspace(0, stop, samples)
+    ys = np.array([np.sin(x) * amplitude for x in xs])
+    return np.array(list([y + np.random.normal() for y in ys]))
 
 
 def test_not_enough_observations():
     acquired = acquisition_delta('R15/P16D/2000-01-01')
-    reds = repeated_values(15)
-    greens = repeated_values(15)
-    blues = repeated_values(15)
+    reds = sinusoid(15)
+    greens = sinusoid(15)
+    blues = sinusoid(15)
     observations = np.array([reds, greens, blues])
     fitter_fn = lasso.fitted_model
     models = change.detect(acquired, observations, fitter_fn)
@@ -93,9 +95,9 @@ def test_not_enough_observations():
 
 def test_enough_observations():
     times = acquisition_delta('R16/P16D/2000-01-01')
-    reds = repeated_values(16)
-    greens = repeated_values(16)
-    blues = repeated_values(16)
+    reds = sinusoid(16)
+    greens = sinusoid(16)
+    blues = sinusoid(16)
     observations = np.array([reds, greens, blues])
     fitter_fn = lasso.fitted_model
     models = change.detect(times, observations, fitter_fn)
@@ -105,9 +107,9 @@ def test_enough_observations():
 
 def test_change_windows(n=50, meow_size=16, peek_size=3):
     times = acquisition_delta('R{0}/P16D/2000-01-01'.format(n))
-    reds = repeated_values(n)
-    greens = repeated_values(n)
-    blues = repeated_values(n)
+    reds = sinusoid(n)
+    greens = sinusoid(n)
+    blues = sinusoid(n)
     observations = np.array([reds, greens, blues])
     fitter_fn = lasso.fitted_model
     models = change.detect(times, observations, fitter_fn, meow_size=meow_size, peek_size=peek_size)
@@ -117,14 +119,10 @@ def test_change_windows(n=50, meow_size=16, peek_size=3):
 
 def test_two_changes_during_time():
     times = acquisition_delta('R50/P16D/2000-01-01')
-
-    # The red band has two distinct segments, but the green and blue bands
-    # are consistent.
-    reds = np.hstack((repeated_values(25)+10, repeated_values(25)+50))
-    greens = repeated_values(50)
-    blues = repeated_values(50)
+    reds = np.hstack((sinusoid(25)+10, sinusoid(25)+50))
+    greens = sinusoid(50)
+    blues = sinusoid(50)
     observations = np.array([reds, greens, blues])
-
     fitter_fn = lasso.fitted_model
 
     models = change.detect(times, observations, fitter_fn)
