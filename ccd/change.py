@@ -1,4 +1,6 @@
 from collections import namedtuple
+import pytest
+
 """Comprehensive data model of the domain is captured in detections,
 observation and observations.  Do not modify these data models unless the
 actual domain changes.  Data filtering & transformation should take place
@@ -52,87 +54,97 @@ def in_expected_range():
 def regress(observation):
     pass
 
+def error_detector(model):
+    """Detect models with RMSE above threshold."""
+    return True
+
+def stable(models):
+    """Is the RMSE of every model below a threshold?"""
+    # return [True for model in models]
+    return [error_detector(model) for ix, model in enumerate(models)]
 
 def change_detector(model, peek_values):
     """Detect change outside of tolerance"""
-    return False
+    return True
 
-def unchanged(models, peek_values, change_detect_fn):
-    return not any([change_detect_fn(model, peek_values[ix]) for ix, model in enumerate(models)])
+def accurate(models, moments, spectra):
+    """Detect spectral values that do not conform to the model"""
+    # return [True for model in models]
+    return [change_detector(model, spectra[ix]) for ix, model in enumerate(models)]
 
-
-def detect(times, observations, fitter_fn, change_detect_fn, meow_size=16, peek_size=3):
+def detect(times, observations, fitter_fn, meow_size=16, peek_size=3, keep_all=False):
     """Runs the core ccd algorithm to detect change in the supplied data
 
     Args:
         observations: a list of acquisition day numbers, and a list
             of spectral values and QA for each day.
-        fitter: a function used to fit observation values and
+        fitter_fn: a function used to fit observation values and
             acquisition dates for each spectra.
-        changer: a function used to detect change; expects a model
-            and an observation.
         meow_size: minimum expected observation window needed to
             produce a fit.
         peek_size: number of observations to consider when detecting
             a change.
+        keep_all: retain all models, even intermediate ones produced
+            during initialization and extension.
 
     Returns:
         Change models for each observation of each spectra.
     """
 
-    # Array index of the model start. Obviously this starts at
-    # zero, but as changes are detected, this will be updated
-    # with a value of the array index, the new model's start.
-    start_ix = 0
+    # Array index of starting point for initialization.
+    meow_ix = 0
 
-    # Result accumulator. Each observation of each spectra has an
-    # updated model.
+    # Result accumulator.
     results = []
 
-    # Array index of where to begin peeking at new observations.
-    # Initially, this is the minimum expected observation window,
-    # (meow_size).
-    peek_ix = start_ix + meow_size
+    # Only build models as long as sufficient data exists.
+    while (meow_ix+meow_size) <= len(times):
 
-    # There are more observations to consider
-    while (start_ix + meow_size) <= len(times):
+        # DEBUGGING? Use `pytest.set_trace()`
 
-        # Build a model for each spectra
-        moments = times[start_ix:meow_size]
-        spectra = observations[:,start_ix:meow_size]
+        # Initially, there are no models.
+        models = None
 
-        # If there are enough observations, fit the model.
-        if len(moments) >= meow_size:
+        # Step 1: INITIALIZATION.
+        # The first step is to generate a model that is stable using only
+        # the minimum number of observations.
+        while (meow_ix+meow_size) <= len(times):
+
+            moments = times[meow_ix:meow_ix + meow_size]
+            spectra = observations[:, meow_ix:meow_ix + meow_size]
             models = [fitter_fn(moments,spectrum) for spectrum in spectra]
             results.append(models)
-        else:
-            break
 
-        # Update models while things appear stable (i.e. none of the
-        # observation spectra peek-windows exhibit change).
-        while (peek_ix+peek_size) <= len(times):
-            # If the models for all spectra appear unchanged, then run the
-            # fitting function using a window that extends into the peeked
-            # observations.
-            peek_values = observations[:, peek_ix:peek_ix+peek_size]
-            if unchanged(models, peek_values, change_detector):
-                # TODO (jmorton) determine how to handle outliers.
-                moments = times[start_ix:(peek_ix+peek_size)]
-                spectra = observations[:, start_ix:(peek_ix+peek_size)]
-                updates = [fitter_fn(moments, spectrum) for spectrum in spectra]
-                results.append(updates)
-                peek_ix += 1
-                print("continue existing time segment: {} {}".format(start_ix,peek_ix+peek_size))
-                continue
-
-            # Otherwise, if any spectra's peeked values appear to change, begin
-            # a new segment starting at the peeked index. The
+            if not all(stable(models)):
+                meow_ix += 1
             else:
-                start_ix = peek_ix
-                peek_ix = start_ix + meow_size
-                print("begin new time segment: {} {}".format(start_ix,peek_ix+peek_size))
                 break
 
-        break
+        # Determine peek_ix after initialization, this must be done after
+        # building the initial model because the window may slide if the
+        # initial observations are unstable.
+        peek_ix = meow_ix + meow_size
+
+        # Step 2: EXTENSION.
+        # The second step is to update a model until observations that do not
+        # fit the model are found.
+        while (peek_ix+peek_size) < len(times):
+
+            next_moments = times[meow_ix:peek_ix + peek_size]
+            next_spectra = observations[:, meow_ix:peek_ix + peek_size]
+
+            if all(accurate(models, next_moments, next_spectra)):
+                moments = times[meow_ix:peek_ix + peek_size]
+                spectra = observations[:, meow_ix:peek_ix + peek_size]
+                models = [fitter_fn(moments, spectrum) for spectrum in spectra]
+                results.append(models)
+                peek_ix += 1
+            else:
+                break
+
+        # After exhausting observations that fit the initialized models,
+        # reposition the meow_ix to the starting point of the look-ahead
+        # so that initialization can begin again.
+        meow_ix = peek_ix
 
     return results
