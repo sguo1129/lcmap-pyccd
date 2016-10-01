@@ -148,6 +148,10 @@ def detect(times, observations, fitter_fn, meow_size=16, peek_size=3, keep_all=F
     # corresponds to a particular spectra.
     results = []
 
+    # Alternate accumulator for models when `keep_all` is True. Having two
+    # separate collections makes the code easier to understand.
+    keeper = []
+
     # The starting point for initialization. Used to as reference point for
     # taking a range of times and spectral values.
     meow_ix = 0
@@ -168,6 +172,9 @@ def detect(times, observations, fitter_fn, meow_size=16, peek_size=3, keep_all=F
             moments = times[meow_ix:meow_ix + meow_size]
             spectra = observations[:, meow_ix:meow_ix + meow_size]
             models = [fitter_fn(moments, spectrum) for spectrum in spectra]
+
+            if keep_all:
+                keeper.append(models)
 
             if not stable(models, moments, spectra):
                 meow_ix += 1
@@ -192,6 +199,8 @@ def detect(times, observations, fitter_fn, meow_size=16, peek_size=3, keep_all=F
                 spectra = observations[:, meow_ix:peek_ix + peek_size]
                 models = [fitter_fn(moments, spectrum) for spectrum in spectra]
                 peek_ix += 1
+                if keep_all:
+                    keeper.append(models)
             else:
                 break
 
@@ -201,4 +210,7 @@ def detect(times, observations, fitter_fn, meow_size=16, peek_size=3, keep_all=F
         results.append(models)
         meow_ix = peek_ix
 
-    return results
+    if keep_all:
+        return keeper
+    else:
+        return results
