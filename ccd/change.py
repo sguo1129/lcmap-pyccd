@@ -2,49 +2,135 @@ from collections import namedtuple
 import numpy as np
 from ccd.models import lasso
 
+"""Comprehensive data model of the domain is captured in detections,
+observation and observations.  Do not modify these data models unless the
+actual domain changes.  Data filtering & transformation should take place
+in another module AFTER the functions in change.py have run... as
+post-processing steps
+"""
+# this and all other parameters for the model go into ~/.config/ccd_config.py
+# minimum_clear_observation_count = 12
+#
+# 2 for tri-modal; 2 for bi-modal; 2 for seasonality; 2 for linear
+# coefficient_categories = {min:4, mid:6, max:8}
+#
+# number of clear observation / number of coefficients
+# clear_observation_threshold = 3
+#
+# qa_confidence_failure_threshold = 0.25
+# permanent_snow_threshold = 0.75
+
+
+detections = namedtuple("Detections", ['is_change', 'is_outlier',
+                                       'rmse', 'magnitude',
+                                       'is_curve_start',
+                                       'is_curve_end',
+                                       'coefficients',
+                                       'category'])
+
+observation = namedtuple('Observation', ['coastal_aerosol', 'red', 'green',
+                                         'blue', 'nir', 'swir1',
+                                         'swir2', 'panchromatic',
+                                         'is_cloud', 'is_clear', 'is_snow',
+                                         'is_fill', 'is_water',
+                                         'qa_confidence'])
+
+observations = namedtuple('Observations', ['date',
+                                           'observation',
+                                           'detections'])
+
 
 def rmse(models, moments, spectra):
-    """Is the RMSE of every model below a threshold???"""
+    """Calculate RMSE for all models; used to determine if models are stable.
+
+    Args:
+        models: fitted models, used to predict values
+        moments: ordinal day numbers
+        spectra: list of spectra corresponding to models
+
+    Returns:
+        list: RMSE for each model.
+    """
     errors = []
     for model, observed in zip(models, spectra):
         matrix = lasso.coefficient_matrix(moments)
         predictions = model.predict(matrix)
+        # TODO (jmorton): VERIFY CORRECTNESS
         error = np.linalg.norm(predictions - observed) / np.sqrt(len(predictions))
         errors.append(error)
     return errors
 
 
-def stable(models, moments, spectra):
-    """"""
+def stable(models, moments, spectra, threshold=2.0):
+    """Determine if all models RMSE are below threshold.
+
+    Args:
+        models: fitted models, used to predict values.
+        moments: ordinal day numbers.
+        spectra: list of spectrum corresponding to models.
+
+    Returns:
+        bool: True, if all models RMSE is below threshold, False otherwise.
+    """
     errors = rmse(models, moments, spectra)
-    print("rmse: {0}".format(errors))
-    return not any([e > 2.0 for e in errors])
+    return all([e < 2.0 for e in errors])
 
 
 def magnitudes(models, moments, spectra):
-    """Calculate change magnitudes for each model and spectra"""
+    """Calculate change magnitudes for each model and spectra.
+
+    Magnitude is the 2-norm of the difference between predicted
+    and observed values.
+
+    Args:
+        models: fitted models, used to predict values.
+        moments: ordinal day numbers.
+        spectra: list of spectrum corresponding to models
+        threshold: tolerance between detected values and
+            predicted ones.
+
+    Returns:
+        list: magnitude of change for each model.
+    """
     magnitudes = []
     for model, observed in zip(models, spectra):
         matrix = lasso.coefficient_matrix(moments)
         predicted = model.predict(matrix)
+        # TODO (jmorton): VERIFY CORRECTNESS
+        # This approach matches what is done if 2-norm (largest sing. value)
         magnitude = np.linalg.norm((predicted-observed), ord=2)
         magnitudes.append(magnitude)
     return magnitudes
 
 
 def accurate(models, moments, spectra, threshold=0.99):
-    """Detect spectral values that do not conform to the model"""
+    """Are observed spectral values within the predicted values' threshold.
+
+    Args:
+        models: fitted models; used to predict values
+        moments: ordinal day numbers
+        spectra: list of spectrum corresponding to models
+        threshold: tolerance between detected values and predicted ones
+
+    Returns:
+        bool: True if each model's predicted and observed values are
+            below the threshold, False otherwise.
+    """
     ms = magnitudes(models, moments, spectra)
-    print("mags: {0}".format(ms))
-    return not any([m > threshold for m in ms])
+    return all([m < threshold for m in ms])
 
 
 def detect(times, observations, fitter_fn, meow_size=16, peek_size=3, keep_all=False):
-    """Runs the core ccd algorithm to detect change in the supplied data
+    """Runs the core change detection algorithm.
+
+    The algorithm assumes all pre-processing has been performed on
+    observations.
 
     Args:
-        observations: a list of acquisition day numbers, and a list
-            of spectral values and QA for each day.
+        times: list of ordinal day numbers relative to some epoch,
+            the particular epoch does not matter.
+        observations: values for one or more spectra corresponding
+            to each time.
         fitter_fn: a function used to fit observation values and
             acquisition dates for each spectra.
         meow_size: minimum expected observation window needed to
@@ -55,7 +141,7 @@ def detect(times, observations, fitter_fn, meow_size=16, peek_size=3, keep_all=F
             during initialization and extension.
 
     Returns:
-        Change models for each observation of each spectra.
+        list: Change models for each observation of each spectra.
     """
 
     # Accumulator for models. This is a list of lists; each top-level list
