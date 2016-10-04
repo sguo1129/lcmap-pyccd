@@ -1,6 +1,4 @@
-from collections import namedtuple
 import numpy as np
-import pytest
 from ccd.models import lasso
 
 """Comprehensive data model of the domain is captured in detections,
@@ -38,7 +36,8 @@ def rmse(models, moments, spectra):
         matrix = lasso.coefficient_matrix(moments)
         predictions = model.predict(matrix)
         # TODO (jmorton): VERIFY CORRECTNESS
-        error = np.linalg.norm(predictions - observed) / np.sqrt(len(predictions))
+        error = \
+            np.linalg.norm(predictions - observed) / np.sqrt(len(predictions))
         errors.append(error)
     return errors
 
