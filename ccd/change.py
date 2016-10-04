@@ -1,6 +1,4 @@
-from collections import namedtuple
 import numpy as np
-import pytest
 from ccd.models import lasso
 
 """Comprehensive data model of the domain is captured in detections,
@@ -38,7 +36,8 @@ def rmse(models, moments, spectra):
         matrix = lasso.coefficient_matrix(moments)
         predictions = model.predict(matrix)
         # TODO (jmorton): VERIFY CORRECTNESS
-        error = np.linalg.norm(predictions - observed) / np.sqrt(len(predictions))
+        error = (np.linalg.norm(predictions - observed) /
+                 np.sqrt(len(predictions)))
         errors.append(error)
     return errors
 
@@ -104,7 +103,7 @@ def end_index(meow_ix, meow_size):
     return meow_ix + meow_size - 1
 
 
-def find_time_index(times, meow_ix, meow_size, day_delta = 365):
+def find_time_index(times, meow_ix, meow_size, day_delta=365):
     """Find index in times at least one year from time at meow_ix.
     Args:
         times: list of ordinal day numbers relative to some epoch,
@@ -122,7 +121,7 @@ def find_time_index(times, meow_ix, meow_size, day_delta = 365):
 
     # If the last time is less than a year, then iterating through
     # times to find an index is futile.
-    if not enough_time(times, meow_ix, day_delta = 365):
+    if not enough_time(times, meow_ix, day_delta=365):
         return None
 
     end_ix = end_index(meow_ix, meow_size)
@@ -137,15 +136,17 @@ def find_time_index(times, meow_ix, meow_size, day_delta = 365):
 
     return end_ix
 
+
 def enough_samples(times, meow_ix, meow_size):
-    print("{}+{}={} <= {}".format(meow_ix,meow_size,(meow_ix+meow_size),len(times)))
     return (meow_ix+meow_size) <= len(times)
 
-def enough_time(times, meow_ix, day_delta = 365):
-    print("{}-{}={} >= {}".format(times[-1],times[meow_ix],(times[-1]-times[meow_ix]),day_delta))
+
+def enough_time(times, meow_ix, day_delta=365):
     return (times[-1]-times[meow_ix]) >= day_delta
 
-def initialize(times, observations, fitter_fn, meow_ix, meow_size, day_delta = 365):
+
+def initialize(times, observations, fitter_fn, meow_ix, meow_size,
+               day_delta=365):
     """Determine the window indices, models, and errors for observations.
 
     Returns:
@@ -153,7 +154,8 @@ def initialize(times, observations, fitter_fn, meow_ix, meow_size, day_delta = 3
     """
 
     # Guard...
-    if not enough_samples(times, meow_ix, meow_size) or not enough_time(times, meow_ix, day_delta):
+    if (not enough_samples(times, meow_ix, meow_size) or
+            not enough_time(times, meow_ix, day_delta)):
         return meow_ix, None, None, None
 
     while (meow_ix+meow_size) <= len(times):
@@ -176,11 +178,6 @@ def initialize(times, observations, fitter_fn, meow_ix, meow_size, day_delta = 3
 
     return meow_ix, end_ix, models, errors_
 
-"""
-  meow_ix   end_ix     peek_ix
-  V              V     V
-[ ..............0.1.2.3....... ]
-"""
 
 def extend(end_ix, peek_size, times, observations, meow_ix, fitter_fn, models):
     """ TODO: """
@@ -209,7 +206,8 @@ def extend(end_ix, peek_size, times, observations, meow_ix, fitter_fn, models):
     return end_ix, models, magnitudes_
 
 
-def detect(times, observations, fitter_fn, meow_size=16, peek_size=3, keep_all=False):
+def detect(times, observations, fitter_fn,
+           meow_size=16, peek_size=3, keep_all=False):
     """Runs the core change detection algorithm.
 
     The algorithm assumes all pre-processing has been performed on
@@ -253,18 +251,17 @@ def detect(times, observations, fitter_fn, meow_size=16, peek_size=3, keep_all=F
                                                       fitter_fn, meow_ix,
                                                       meow_size)
 
-        print("{},{},{}".format(meow_ix, end_ix, len(times)))
-
         # Step 2: Extension
         end_ix, models, magnitudes_ = extend(end_ix, peek_size, times,
                                              observations, meow_ix,
                                              fitter_fn, models)
 
-        # Step 3: Always build a model for each step. This provides better diagnostics
-        # for each timestep. The list of models can be filtered so that intermediate
-        # results are preserved.
+        # Step 3: Always build a model for each step. This provides better
+        # diagnostics for each timestep. The list of models can be filtered
+        # so that intermediate results are preserved.
         if (meow_ix is not None) and (end_ix is not None):
-            result = (times[meow_ix], times[end_ix], models, errors_, magnitudes_)
+            result = (times[meow_ix], times[end_ix],
+                      models, errors_, magnitudes_)
             results += (result,)
 
         meow_ix = end_ix

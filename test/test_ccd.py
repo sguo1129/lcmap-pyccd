@@ -1,7 +1,6 @@
 import aniso8601
 import datetime
 import numpy as np
-import pytest
 import ccd.change as change
 
 from ccd.models import lasso
@@ -39,11 +38,6 @@ def gen_acquisition_delta(interval):
     epoch = datetime.datetime.utcfromtimestamp(0).date()
     dates = gen_acquisition_dates(interval)
     yield [(date-epoch).days for date in dates]
-
-
-def read_csv_sample(path):
-    """Load a sample file containing acquisition days and spectral values"""
-    return np.genfromtxt('test/resources/sample_1.csv', delimiter=',')
 
 
 def acquisition_delta(interval):
@@ -98,8 +92,9 @@ def test_one_year_minimum():
     fitter_fn = lasso.fitted_model
     models = change.detect(times, observations, fitter_fn)
     time_delta = times[-1]-times[1]
-    assert time_delta < 365, "test data appears to be incorrect {0} > 365".format(time_delta)
-    assert len(models) == 0, "expected {}, actual {}".format(0, len(models))
+    assert time_delta < 365
+    assert len(models) == 0
+
 
 def test_enough_observations():
     times = acquisition_delta('R16/2000-01-01/P1M')
@@ -108,11 +103,11 @@ def test_enough_observations():
     greens = sinusoid(times)
     observations = np.array([reds, blues, greens])
     fitter_fn = lasso.fitted_model
-    # pytest.set_trace()
     models = change.detect(times, observations, fitter_fn)
     time_delta = times[-1]-times[1]
-    assert time_delta > 365, "test data appears to be incorrect, {0} < 365?".format(time_delta)
-    assert len(models) == 1, "actual: {}, expected: {}".format(len(models), 1)
+    assert time_delta > 365
+    assert len(models) == 1
+
 
 def test_change_windows(n=50, meow_size=16, peek_size=3):
     times = acquisition_delta('R{0}/2000-01-01/P16D'.format(n))
@@ -121,14 +116,15 @@ def test_change_windows(n=50, meow_size=16, peek_size=3):
     blues = sinusoid(times)
     observations = np.array([reds, greens, blues])
     fitter_fn = lasso.fitted_model
-    models = change.detect(times, observations, fitter_fn, meow_size=meow_size, peek_size=peek_size)
+    models = change.detect(times, observations, fitter_fn,
+                           meow_size=meow_size, peek_size=peek_size)
     # If we only accumulate stable models...
-    expected = 1 # model
+    expected = 1
     # If we accumulate all steps...
     # expected = n - meow_size - peek_size + 2
     time_delta = times[-1]-times[1]
-    assert time_delta > 365, "test data appears to be incorrect {0} < 365".format(time_delta)
-    assert len(models) == expected, "actual: {}, expected: {}".format(len(models), expected)
+    assert time_delta > 365
+    assert len(models) == expected
 
 
 def testing_an_unstable_initial_period():
@@ -140,7 +136,7 @@ def testing_an_unstable_initial_period():
     fitter_fn = lasso.fitted_model
 
     models = change.detect(times, observations, fitter_fn)
-    assert len(models) == 1, "expected: {0}, actual: {1}".format(1, len(models))
+    assert len(models) == 1
 
 
 def test_two_changes_during_time():
@@ -152,18 +148,16 @@ def test_two_changes_during_time():
     fitter_fn = lasso.fitted_model
 
     models = change.detect(times, observations, fitter_fn)
-    assert len(models) == 2, "expected: {0}, actual: {1}".format(2, len(models))
+    assert len(models) == 2
 
 
 def test_three_changes_during_time():
     times = acquisition_delta('R150/2000-01-01/P32D')
-    reds = np.hstack((sinusoid(times[0:50])  + 10,
+    reds = np.hstack((sinusoid(times[0:50]) + 10,
                       sinusoid(times[50:100]) + 50,
                       sinusoid(times[100:150]) + 10))
     observations = np.array([reds])
     fitter_fn = lasso.fitted_model
 
     models = change.detect(times, observations, fitter_fn)
-    #print("MODELS")
-    #print(models[0][0].intercept_)
-    assert len(models) == 3, "expected: {}, actual: {}".format(3, len(models))
+    assert len(models) == 3
