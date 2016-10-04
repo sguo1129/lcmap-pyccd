@@ -6,6 +6,8 @@ pyccd exists to provide the simplest possible implementation of ccd.
 ## System Requirements
 python3-dev (ubuntu) or python3-devel (centos) for sklearn
 
+graphviz for svg output of profiling
+
 ## Getting Started
 It's highly recommended to create a virtual environment to perform all
 your development and testing.
@@ -39,6 +41,16 @@ Run the tests.
 Alternatively.
 ```bash
 (.venv) user@dev:/home/user/pyccd$ pytest
+```
+
+## Profiling
+```bash
+(.venv) user@dev:/home/user/pyccd$ pytest --profile
+```
+
+Or if an output svg if preferred:
+```bash
+(.venv) user@dev:/home/user/pyccd$ pytest --profile-svg
 ```
 
 ## Performance TODO
