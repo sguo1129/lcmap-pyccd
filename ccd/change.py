@@ -1,39 +1,44 @@
+"""Functions for producing change model parameters.
+
+The change module provides a 'detect' function used to produce change model parameters
+for multi-spectra time-series data. It is implemented in a manner independent of data
+sources, input formats, pre-processing routines, and output formats.
+
+In general, change detection is an iterative, two-step process: an initial stable period
+of time is found for a time-series of data and then the same window is extended until a
+change is detected. These steps repeat until all available observations are considered.
+
+The result of this process is a list-of-lists of change models that correspond to
+observation spectra.
+
+Preprocessing routines are essential to, but distinct from, the core change detection
+algorithm. See the `ccd.filter` for more details related to this step.
+
+For more information please refer to the `CCDC Algorithm Description Document`_.
+
+.. _Algorithm Description Document:
+   http://landsat.usgs.gov/documents/ccdc_add.pdf
+"""
+
 import numpy as np
 from ccd.models import lasso
 
-"""Comprehensive data model of the domain is captured in detections,
-observation and observations.  Do not modify these data models unless the
-actual domain changes.  Data filtering & transformation should take place
-in another module AFTER the functions in change.py have run... as
-post-processing steps
-"""
-# this and all other parameters for the model go into ~/.config/ccd_config.py
-# minimum_clear_observation_count = 12
-#
-# 2 for tri-modal; 2 for bi-modal; 2 for seasonality; 2 for linear
-# coefficient_categories = {min:4, mid:6, max:8}
-#
-# number of clear observation / number of coefficients
-# clear_observation_threshold = 3
-#
-# qa_confidence_failure_threshold = 0.25
-# permanent_snow_threshold = 0.75
 
-
-def rmse(models, moments, spectra):
+def rmse(models, times, observations):
     """Calculate RMSE for all models; used to determine if models are stable.
 
     Args:
-        models: fitted models, used to predict values
-        moments: ordinal day numbers
-        spectra: list of spectra corresponding to models
+        models: fitted models, used to predict values, corresponds to
+            observation spectra.
+        times: ordinal day numbers
+        observations: list of spectra corresponding to models
 
     Returns:
         list: RMSE for each model.
     """
     errors = []
-    for model, observed in zip(models, spectra):
-        matrix = lasso.coefficient_matrix(moments)
+    for model, observed in zip(models, observations):
+        matrix = lasso.coefficient_matrix(times)
         predictions = model.predict(matrix)
         # TODO (jmorton): VERIFY CORRECTNESS
         error = (np.linalg.norm(predictions - observed) /
@@ -45,18 +50,21 @@ def rmse(models, moments, spectra):
 def stable(errors, threshold=2.0):
     """Determine if all models RMSE are below threshold.
 
+    Convenience function used to improve readability of code.
+
     Args:
-        models: fitted models, used to predict values.
-        moments: ordinal day numbers.
-        spectra: list of spectrum corresponding to models.
+        errors: list of error values corresponding to observation
+            spectra.
+        threshold: tolerance for error, all errors must be strictly
+            below this value.
 
     Returns:
         bool: True, if all models RMSE is below threshold, False otherwise.
     """
-    return all([e < 2.0 for e in errors])
+    return all([e < threshold for e in errors])
 
 
-def magnitudes(models, moments, spectra):
+def magnitudes(models, times, observations):
     """Calculate change magnitudes for each model and spectra.
 
     Magnitude is the 2-norm of the difference between predicted
@@ -64,8 +72,9 @@ def magnitudes(models, moments, spectra):
 
     Args:
         models: fitted models, used to predict values.
-        moments: ordinal day numbers.
-        spectra: list of spectrum corresponding to models
+        times: list of ordinal day numbers relative to some epoch,
+            the particular epoch does not matter.
+        observations: spectral values, list of spectra -> values
         threshold: tolerance between detected values and
             predicted ones.
 
@@ -73,9 +82,9 @@ def magnitudes(models, moments, spectra):
         list: magnitude of change for each model.
     """
     magnitudes = []
-    matrix = lasso.coefficient_matrix(moments)
+    matrix = lasso.coefficient_matrix(times)
 
-    for model, observed in zip(models, spectra):
+    for model, observed in zip(models, observations):
         predicted = model.predict(matrix)
         # TODO (jmorton): VERIFY CORRECTNESS
         # This approach matches what is done if 2-norm (largest sing. value)
@@ -86,6 +95,8 @@ def magnitudes(models, moments, spectra):
 
 def accurate(magnitudes, threshold=0.99):
     """Are observed spectral values within the predicted values' threshold.
+
+    Convenience function used to improve readability of code.
 
     Args:
         magnitudes: list of magnitudes for spectra
@@ -153,7 +164,8 @@ def enough_samples(times, meow_ix, meow_size):
     Args:
         times: list of ordinal day numbers relative to some epoch,
             the particular epoch does not matter.
-        meow_ix: start index of time window
+        meow_ix: start index of time/observation window, used with meow_size
+            determine if sufficient observations exist.
         meow_size: offset of last time from meow_ix
 
     Returns:
@@ -170,7 +182,8 @@ def enough_time(times, meow_ix, day_delta=365):
     Args:
         times: list of ordinal day numbers relative to some epoch,
             the particular epoch does not matter.
-        meow_ix: index of first time value in times.
+        meow_ix: start index of time/observation window, used to
+            get a value from time for comparison.
         day_delta: minimum difference between time at meow_ix and most
             recent observation.
 
@@ -190,7 +203,8 @@ def initialize(times, observations, fitter_fn, meow_ix, meow_size,
         observations: spectral values, list of spectra -> values
         meow_ix: start index of time/observation window
         meow_size: offset from meow_ix, determines initial window size
-        day_delta: minimum difference between time at meow_ix and most recent observation
+        day_delta: minimum difference between time at meow_ix and most
+            recent observation
 
     Returns:
         tuple: start, end, models, errors
@@ -215,14 +229,14 @@ def initialize(times, observations, fitter_fn, meow_ix, meow_size,
         # Each spectra, although analyzed independently, all share
         # a common time-frame. Consequently, it doesn't make sense
         # to analyze one spectrum in it's entirety.
-        moments = times[meow_ix:end_ix]
+        period = times[meow_ix:end_ix]
         spectra = observations[:, meow_ix:end_ix]
-        models = [fitter_fn(moments, spectrum) for spectrum in spectra]
+        models = [fitter_fn(period, spectrum) for spectrum in spectra]
 
         # TODO (jmorton): The error of a model is calculated during
         # initialization, but isn't subsequently updated. Determine
         # if this is correct.
-        errors_ = rmse(models, moments, spectra)
+        errors_ = rmse(models, period, spectra)
 
         # If a model is not stable, then it is possible that a disturbance
         # exists somewhere in the observation window. The window shifts
@@ -235,7 +249,7 @@ def initialize(times, observations, fitter_fn, meow_ix, meow_size,
     return meow_ix, end_ix, models, errors_
 
 
-def extend(end_ix, peek_size, times, observations, meow_ix, fitter_fn, models):
+def extend(times, observations, meow_ix, end_ix, peek_size, fitter_fn, models):
     """Increase observation window until change is detected.
 
     Args:
@@ -262,14 +276,14 @@ def extend(end_ix, peek_size, times, observations, meow_ix, fitter_fn, models):
     while (end_ix+peek_size) <= len(times):
         peek_ix = end_ix + peek_size
 
-        # TODO (jmorton): Should this be prior and peeked moments and spectra
-        #      or should this be only the peeked moments and spectra?
-        moments = times[meow_ix:peek_ix]
+        # TODO (jmorton): Should this be prior and peeked period and spectra
+        #      or should this be only the peeked period and spectra?
+        period = times[meow_ix:peek_ix]
         spectra = observations[:, meow_ix:peek_ix]
 
-        magnitudes_ = magnitudes(models, moments, spectra)
+        magnitudes_ = magnitudes(models, period, spectra)
         if accurate(magnitudes_):
-            models = [fitter_fn(moments, spectrum) for spectrum in spectra]
+            models = [fitter_fn(period, spectrum) for spectrum in spectra]
             end_ix += 1
         else:
             break
@@ -278,7 +292,7 @@ def extend(end_ix, peek_size, times, observations, meow_ix, fitter_fn, models):
 
 
 def detect(times, observations, fitter_fn,
-           meow_size=16, peek_size=3, keep_all=False):
+           meow_size=16, peek_size=3):
     """Runs the core change detection algorithm.
 
     The algorithm assumes all pre-processing has been performed on
@@ -295,8 +309,6 @@ def detect(times, observations, fitter_fn,
             produce a fit.
         peek_size: number of observations to consider when detecting
             a change.
-        keep_all: retain all models, even intermediate ones produced
-            during initialization and extension.
 
     Returns:
         list: Change models for each observation of each spectra.
@@ -323,13 +335,15 @@ def detect(times, observations, fitter_fn,
                                                       meow_size)
 
         # Step 2: Extension -- expand time-frame until a change is detected.
-        end_ix, models, magnitudes_ = extend(end_ix, peek_size, times,
-                                             observations, meow_ix,
-                                             fitter_fn, models)
+        times, observations, meow_ix, end_ix, peek_size, fitter_fn, models
+        end_ix, models, magnitudes_ = extend(times, observations, meow_ix,
+                                             end_ix, peek_size, fitter_fn,
+                                             models)
 
-        # Step 3: Always build a model for each step. This provides better
-        # diagnostics for each timestep. The list of models can be filtered
-        # so that intermediate results are preserved.
+        # After initialization and extension, the change models for each
+        # spectra are complete for a period of time. If meow_ix and end_ix
+        # are not present, then not enough observations exist for a useful
+        # model to be produced, so nothing is appened to results.
         if (meow_ix is not None) and (end_ix is not None):
             result = (times[meow_ix], times[end_ix],
                       models, errors_, magnitudes_)
