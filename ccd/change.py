@@ -88,9 +88,7 @@ def accurate(magnitudes, threshold=0.99):
     """Are observed spectral values within the predicted values' threshold.
 
     Args:
-        models: fitted models; used to predict values
-        moments: ordinal day numbers
-        spectra: list of spectrum corresponding to models
+        magnitudes: list of magnitudes for spectra
         threshold: tolerance between detected values and predicted ones
 
     Returns:
@@ -101,6 +99,15 @@ def accurate(magnitudes, threshold=0.99):
 
 
 def end_index(meow_ix, meow_size):
+    """Find end index for minimum expected observation window.
+
+    Args:
+        meow_ix: starting index
+        meow_size: offset from start
+
+    Returns:
+        integer: index of last observation
+    """
     return meow_ix + meow_size - 1
 
 
@@ -139,16 +146,51 @@ def find_time_index(times, meow_ix, meow_size, day_delta=365):
 
 
 def enough_samples(times, meow_ix, meow_size):
+    """Change detection requires a minimum number of samples (as specified by meow size).
+
+    This function improves readability of logic that performs this check.
+
+    Args:
+        times: list of ordinal day numbers relative to some epoch,
+            the particular epoch does not matter.
+        meow_ix: start index of time window
+        meow_size: offset of last time from meow_ix
+
+    Returns:
+        bool: True if times contains enough samples after meow_ix, False otherwise.
+    """
     return (meow_ix+meow_size) <= len(times)
 
 
 def enough_time(times, meow_ix, day_delta=365):
+    """Change detection requires a minimum amount of time (as specified by day_delta).
+
+    This function, like `enough_samples` improves readability of logic that performs this check.
+
+    Args:
+        times: list of ordinal day numbers relative to some epoch,
+            the particular epoch does not matter.
+        meow_ix: index of first time value in times.
+        day_delta: minimum difference between time at meow_ix and most
+            recent observation.
+
+    Returns:
+        list: RMSE for each model.
+    """
     return (times[-1]-times[meow_ix]) >= day_delta
 
 
 def initialize(times, observations, fitter_fn, meow_ix, meow_size,
                day_delta=365):
     """Determine the window indices, models, and errors for observations.
+
+    Args:
+        times: list of ordinal day numbers relative to some epoch,
+            the particular epoch does not matter.
+        observations: spectral values, list of spectra -> values
+        meow_ix: start index of time/observation window
+        meow_size: offset from meow_ix, determines initial window size
+        day_delta: minimum difference between time at meow_ix and most recent observation
 
     Returns:
         tuple: start, end, models, errors
@@ -160,18 +202,31 @@ def initialize(times, observations, fitter_fn, meow_ix, meow_size,
         return meow_ix, None, None, None
 
     while (meow_ix+meow_size) <= len(times):
+
+        # Finding a sufficient window of time needs must run
+        # each iteration because the starting point (meow_ix)
+        # will increment if the model isn't stable, incrementing
+        # the window of in lock-step does not guarantee a 1-year+
+        # time-range.
         end_ix = find_time_index(times, meow_ix, meow_size, day_delta)
         if end_ix is None:
             break
 
+        # Each spectra, although analyzed independently, all share
+        # a common time-frame. Consequently, it doesn't make sense
+        # to analyze one spectrum in it's entirety.
         moments = times[meow_ix:end_ix]
         spectra = observations[:, meow_ix:end_ix]
         models = [fitter_fn(moments, spectrum) for spectrum in spectra]
 
+        # TODO (jmorton): The error of a model is calculated during
+        # initialization, but isn't subsequently updated. Determine
+        # if this is correct.
+        errors_ = rmse(models, moments, spectra)
+
         # If a model is not stable, then it is possible that a disturbance
         # exists somewhere in the observation window. The window shifts
         # forward in time, and begins initialization again.
-        errors_ = rmse(models, moments, spectra)
         if not stable(errors_):
             meow_ix += 1
         else:
@@ -180,15 +235,23 @@ def initialize(times, observations, fitter_fn, meow_ix, meow_size,
     return meow_ix, end_ix, models, errors_
 
 
-"""
-  meow_ix   end_ix     peek_ix
-  V              V     V
-[ ..............0.1.2.3....... ]
-"""
-
-
 def extend(end_ix, peek_size, times, observations, meow_ix, fitter_fn, models):
-    """ TODO: """
+    """Increase observation window until change is detected.
+
+    Args:
+        times: list of ordinal day numbers relative to some epoch,
+            the particular epoch does not matter.
+        observations: spectral values, list of spectra -> values
+        meow_ix: start index of time/observation window
+        end_ix: end index of time/observation window
+        peek_size: looked ahead for detecting change
+        fitter_fn: function used to model observations
+        models: previously generated models, used to calculate magnitude
+        day_delta: minimum difference between time at meow_ix and most recent observation
+
+    Returns:
+        tuple: end index, models, and change magnitude.
+    """
     # Step 2: EXTENSION.
     # The second step is to update a model until observations that do not
     # fit the model are found.
@@ -254,12 +317,12 @@ def detect(times, observations, fitter_fn,
     # it will become None.
     while (meow_ix is not None) and (meow_ix+meow_size) <= len(times):
 
-        # Step 1: initialize
+        # Step 1: Initialize -- find an initial stable time-frame.
         meow_ix, end_ix, models, errors_ = initialize(times, observations,
                                                       fitter_fn, meow_ix,
                                                       meow_size)
 
-        # Step 2: Extension
+        # Step 2: Extension -- expand time-frame until a change is detected.
         end_ix, models, magnitudes_ = extend(end_ix, peek_size, times,
                                              observations, meow_ix,
                                              fitter_fn, models)
@@ -272,6 +335,9 @@ def detect(times, observations, fitter_fn,
                       models, errors_, magnitudes_)
             results += (result,)
 
+        # Step 4: Iterate. The meow_ix is moved to the end of the current
+        # timeframe and a new model is generated. It is possible for end_ix
+        # to be None, in which case iteration stops.
         meow_ix = end_ix
 
     return results
