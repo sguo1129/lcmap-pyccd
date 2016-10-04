@@ -161,3 +161,33 @@ def test_three_changes_during_time():
 
     models = change.detect(times, observations, fitter_fn)
     assert len(models) == 3
+
+
+def test_T500_S10():
+    times = acquisition_delta('R500/1990-01-01/P8D')
+    reds = np.hstack((sinusoid(times[0:50]) + 10,
+                      sinusoid(times[50:100]) + 50,
+                      sinusoid(times[100:150]) + 10,
+                      sinusoid(times[150:200]) + 50,
+                      sinusoid(times[200:250]) + 10,
+                      sinusoid(times[200:250]) + 50,
+                      sinusoid(times[250:300]) + 10,
+                      sinusoid(times[300:350]) + 50,
+                      sinusoid(times[350:400]) + 10,
+                      sinusoid(times[400:450]) + 50,
+                      sinusoid(times[450:500]) + 10))
+    observations = np.array([reds])
+    fitter_fn = lasso.fitted_model
+
+    models = change.detect(times, observations, fitter_fn)
+    assert len(models) > 0
+
+
+def test_T500_S1():
+    times = acquisition_delta('R500/1990-01-01/P8D')
+    reds = np.hstack((sinusoid(times[0:500])+10))
+    observations = np.array([reds])
+    fitter_fn = lasso.fitted_model
+
+    models = change.detect(times, observations, fitter_fn)
+    assert len(models) > 0
