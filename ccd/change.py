@@ -132,6 +132,14 @@ def find_time_index(times, meow_ix, meow_size, day_delta = 365):
         else:  # try again!
             end_ix += 1
 
+def initialize():
+    """ TODO: """
+    pass
+
+def extend():
+    """ TODO: """
+    pass
+
 
 def detect(times, observations, fitter_fn, meow_size=16, peek_size=3, keep_all=False):
     """Runs the core change detection algorithm.
@@ -159,7 +167,7 @@ def detect(times, observations, fitter_fn, meow_size=16, peek_size=3, keep_all=F
 
     # Accumulator for models. This is a list of lists; each top-level list
     # corresponds to a particular spectra.
-    results = []
+    results = ()
 
     # The starting point for initialization. Used to as reference point for
     # taking a range of times and spectral values.
@@ -218,7 +226,11 @@ def detect(times, observations, fitter_fn, meow_size=16, peek_size=3, keep_all=F
         # Step 3: Always build a model for each step. This provides better diagnostics
         # for each timestep. The list of models can be filtered so that intermediate
         # results are preserved.
-        results.append(models)
+
+        result = (times[meow_ix], times[end_ix], models, errors_, magnitudes_)
+
+        # add result as a second dim to top level results
+        results += (result,)
 
         meow_ix = end_ix
 
