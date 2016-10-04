@@ -61,7 +61,7 @@ def rmse(models, moments, spectra):
     return errors
 
 
-def stable(models, moments, spectra, threshold=2.0):
+def stable(errors, threshold=2.0):
     """Determine if all models RMSE are below threshold.
 
     Args:
@@ -72,7 +72,6 @@ def stable(models, moments, spectra, threshold=2.0):
     Returns:
         bool: True, if all models RMSE is below threshold, False otherwise.
     """
-    errors = rmse(models, moments, spectra)
     return all([e < 2.0 for e in errors])
 
 
@@ -103,7 +102,7 @@ def magnitudes(models, moments, spectra):
     return magnitudes
 
 
-def accurate(models, moments, spectra, threshold=0.99):
+def accurate(magnitudes, threshold=0.99):
     """Are observed spectral values within the predicted values' threshold.
 
     Args:
@@ -116,8 +115,7 @@ def accurate(models, moments, spectra, threshold=0.99):
         bool: True if each model's predicted and observed values are
             below the threshold, False otherwise.
     """
-    ms = magnitudes(models, moments, spectra)
-    return all([m < threshold for m in ms])
+    return all([m < threshold for m in magnitudes])
 
 
 def find_time_index(times, meow_ix, meow_size, day_delta = 365):
@@ -211,7 +209,8 @@ def detect(times, observations, fitter_fn, meow_size=16, peek_size=3, keep_all=F
             # If a model is not stable, then it is possible that a disturbance
             # exists somewhere in the observation window. The window shifts
             # forward in time, and begins initialization again.
-            if not stable(models, moments, spectra):
+            errors_ = rmse(models, moments, spectra)
+            if not stable(errors_):
                 meow_ix += 1
             else:
                 break
@@ -233,6 +232,8 @@ def detect(times, observations, fitter_fn, meow_size=16, peek_size=3, keep_all=F
                 print("Extending an accurate model.")
                 moments = times[meow_ix:peek_ix + peek_size]
                 spectra = observations[:, meow_ix:peek_ix + peek_size]
+            magnitudes_ = magnitudes(models, next_moments, next_spectra)
+            if accurate(magnitudes_):
                 models = [fitter_fn(moments, spectrum) for spectrum in spectra]
                 peek_ix += 1
             else:
