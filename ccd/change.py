@@ -335,7 +335,6 @@ def detect(times, observations, fitter_fn,
                                                       meow_size)
 
         # Step 2: Extension -- expand time-frame until a change is detected.
-        times, observations, meow_ix, end_ix, peek_size, fitter_fn, models
         end_ix, models, magnitudes_ = extend(times, observations, meow_ix,
                                              end_ix, peek_size, fitter_fn,
                                              models)
