@@ -186,8 +186,14 @@ def detect(times, observations, fitter_fn, meow_size=16, peek_size=3, keep_all=F
 
     # Only build models as long as sufficient data exists. The observation
     # window starts at meow_ix and is fixed until the change model no longer
-    # fits new observations, i.e. a change is detected.
-    while (meow_ix+meow_size-1) <= len(times):
+    # fits new observations, i.e. a change is detected. The meow_ix updated
+    # at the end of each iteration using an end index, so it is possible
+    # it will become None.
+    while (meow_ix is not None) and (meow_ix+meow_size-1) <= len(times):
+
+        # These three variables are assigned during initializaiton and extension;
+        # this ensures they are defined even if a step cannot run.
+        models, errors_, magnitudes_ = None, None, None
 
         # Step 1: INITIALIZATION.
         # The first step is to generate a model that is stable using only
@@ -196,11 +202,8 @@ def detect(times, observations, fitter_fn, meow_size=16, peek_size=3, keep_all=F
 
             # Stretch observation window until it includes full year.
             end_ix = find_time_index(times, meow_ix, meow_size)
-
-            # If an end index could not be found, then there aren't enough
-            # observations to continue producing models.
             if end_ix is None:
-                return results
+                break
 
             moments = times[meow_ix:end_ix]
             spectra = observations[:, meow_ix:end_ix]
@@ -218,7 +221,7 @@ def detect(times, observations, fitter_fn, meow_size=16, peek_size=3, keep_all=F
         # Step 2: EXTENSION.
         # The second step is to update a model until observations that do not
         # fit the model are found.
-        while (end_ix+peek_size) <= len(times):
+        while (end_ix is not None) and (end_ix+peek_size) <= len(times):
             next_moments = times[meow_ix:end_ix + peek_size]
             next_spectra = observations[:, meow_ix:end_ix + peek_size]
 
@@ -231,11 +234,11 @@ def detect(times, observations, fitter_fn, meow_size=16, peek_size=3, keep_all=F
             else:
                 break
 
+        # Step 3: Always build a model for each step. This provides better diagnostics
+        # for each timestep. The list of models can be filtered so that intermediate
+        # results are preserved.
         results.append(models)
 
         meow_ix = end_ix
 
-    if keep_all:
-        return keeper
-    else:
-        return results
+    return results
