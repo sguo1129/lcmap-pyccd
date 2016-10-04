@@ -21,25 +21,6 @@ post-processing steps
 # permanent_snow_threshold = 0.75
 
 
-detections = namedtuple("Detections", ['is_change', 'is_outlier',
-                                       'rmse', 'magnitude',
-                                       'is_curve_start',
-                                       'is_curve_end',
-                                       'coefficients',
-                                       'category'])
-
-observation = namedtuple('Observation', ['coastal_aerosol', 'red', 'green',
-                                         'blue', 'nir', 'swir1',
-                                         'swir2', 'panchromatic',
-                                         'is_cloud', 'is_clear', 'is_snow',
-                                         'is_fill', 'is_water',
-                                         'qa_confidence'])
-
-observations = namedtuple('Observations', ['date',
-                                           'observation',
-                                           'detections'])
-
-
 def rmse(models, moments, spectra):
     """Calculate RMSE for all models; used to determine if models are stable.
 
@@ -148,7 +129,7 @@ def find_time_index(times, meow_ix, meow_size, day_delta = 365):
     while end_ix < len(times):
         if times[end_ix] - times[meow_ix] >= 365:
             return end_ix
-        else: # try again!
+        else:  # try again!
             end_ix += 1
 
 

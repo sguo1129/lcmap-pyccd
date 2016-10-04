@@ -163,4 +163,6 @@ def test_three_changes_during_time():
     fitter_fn = lasso.fitted_model
 
     models = change.detect(times, observations, fitter_fn)
+    print("MODELS")
+    print(models[0][0].intercept_)
     assert len(models) == 3, "expected: {}, actual: {}".format(3, len(models))
