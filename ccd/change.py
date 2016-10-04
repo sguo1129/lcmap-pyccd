@@ -74,6 +74,7 @@ def magnitudes(models, moments, spectra):
     """
     magnitudes = []
     matrix = lasso.coefficient_matrix(moments)
+
     for model, observed in zip(models, spectra):
         predicted = model.predict(matrix)
         # TODO (jmorton): VERIFY CORRECTNESS
@@ -177,6 +178,13 @@ def initialize(times, observations, fitter_fn, meow_ix, meow_size,
             break
 
     return meow_ix, end_ix, models, errors_
+
+
+"""
+  meow_ix   end_ix     peek_ix
+  V              V     V
+[ ..............0.1.2.3....... ]
+"""
 
 
 def extend(end_ix, peek_size, times, observations, meow_ix, fitter_fn, models):
