@@ -1,5 +1,6 @@
 from collections import namedtuple
 import numpy as np
+import pytest
 from ccd.models import lasso
 
 """Comprehensive data model of the domain is captured in detections,
@@ -99,6 +100,10 @@ def accurate(magnitudes, threshold=0.99):
     return all([m < threshold for m in magnitudes])
 
 
+def end_index(meow_ix, meow_size):
+    return meow_ix + meow_size - 1
+
+
 def find_time_index(times, meow_ix, meow_size, day_delta = 365):
     """Find index in times at least one year from time at meow_ix.
     Args:
@@ -117,31 +122,42 @@ def find_time_index(times, meow_ix, meow_size, day_delta = 365):
 
     # If the last time is less than a year, then iterating through
     # times to find an index is futile.
-    if times[-1] - times[meow_ix] < day_delta:
+    if not enough_time(times, meow_ix, day_delta = 365):
         return None
 
-    # Array index is zero based, so the the end index needs to be
-    # subtracted by one.
-    end_ix = meow_ix + meow_size - 1
+    end_ix = end_index(meow_ix, meow_size)
 
     # This seems pretty naive, if you can think of something more
     # performant and elegant, have at it!
     while end_ix < len(times):
-        if times[end_ix] - times[meow_ix] >= 365:
+        if (times[end_ix]-times[meow_ix]) >= day_delta:
             return end_ix
-        else:  # try again!
+        else:
             end_ix += 1
 
+    return end_ix
 
-def initialize(times, observations, fitter_fn, meow_ix, meow_size):
-    """ TODO: """
-    # Step 1: INITIALIZATION.
-    # The first step is to generate a model that is stable using only
-    # the minimum number of observations.
-    while (meow_ix+meow_size-1) <= len(times):
+def enough_samples(times, meow_ix, meow_size):
+    print("{}+{}={} <= {}".format(meow_ix,meow_size,(meow_ix+meow_size),len(times)))
+    return (meow_ix+meow_size) <= len(times)
 
-        # Stretch observation window until it includes full year.
-        end_ix = find_time_index(times, meow_ix, meow_size)
+def enough_time(times, meow_ix, day_delta = 365):
+    print("{}-{}={} >= {}".format(times[-1],times[meow_ix],(times[-1]-times[meow_ix]),day_delta))
+    return (times[-1]-times[meow_ix]) >= day_delta
+
+def initialize(times, observations, fitter_fn, meow_ix, meow_size, day_delta = 365):
+    """Determine the window indices, models, and errors for observations.
+
+    Returns:
+        tuple: start, end, models, errors
+    """
+
+    # Guard...
+    if not enough_samples(times, meow_ix, meow_size) or not enough_time(times, meow_ix, day_delta):
+        return meow_ix, None, None, None
+
+    while (meow_ix+meow_size) <= len(times):
+        end_ix = find_time_index(times, meow_ix, meow_size, day_delta)
         if end_ix is None:
             break
 
@@ -158,8 +174,13 @@ def initialize(times, observations, fitter_fn, meow_ix, meow_size):
         else:
             break
 
-    return errors_, meow_ix, end_ix, models
+    return meow_ix, end_ix, models, errors_
 
+"""
+  meow_ix   end_ix     peek_ix
+  V              V     V
+[ ..............0.1.2.3....... ]
+"""
 
 def extend(end_ix, peek_size, times, observations, meow_ix, fitter_fn, models):
     """ TODO: """
@@ -167,17 +188,19 @@ def extend(end_ix, peek_size, times, observations, meow_ix, fitter_fn, models):
     # The second step is to update a model until observations that do not
     # fit the model are found.
 
-    if end_ix is None:
-        return end_ix, None, None
+    if (end_ix is None) or ((end_ix+peek_size) > len(times)):
+        return end_ix, models, None
 
-    while end_ix+peek_size <= len(times):
-        next_moments = times[meow_ix:end_ix + peek_size]
-        next_spectra = observations[:, meow_ix:end_ix + peek_size]
+    while (end_ix+peek_size) <= len(times):
+        peek_ix = end_ix + peek_size
 
-        magnitudes_ = magnitudes(models, next_moments, next_spectra)
+        # TODO (jmorton): Should this be prior and peeked moments and spectra
+        #      or should this be only the peeked moments and spectra?
+        moments = times[meow_ix:peek_ix]
+        spectra = observations[:, meow_ix:peek_ix]
+
+        magnitudes_ = magnitudes(models, moments, spectra)
         if accurate(magnitudes_):
-            moments = times[meow_ix:end_ix + peek_size]
-            spectra = observations[:, meow_ix:end_ix + peek_size]
             models = [fitter_fn(moments, spectrum) for spectrum in spectra]
             end_ix += 1
         else:
@@ -223,13 +246,14 @@ def detect(times, observations, fitter_fn, meow_size=16, peek_size=3, keep_all=F
     # fits new observations, i.e. a change is detected. The meow_ix updated
     # at the end of each iteration using an end index, so it is possible
     # it will become None.
-    while (meow_ix is not None) and (meow_ix+meow_size-1) <= len(times):
+    while (meow_ix is not None) and (meow_ix+meow_size) <= len(times):
 
         # Step 1: initialize
-        errors_, meow_ix, end_ix, models = initialize(times, observations,
+        meow_ix, end_ix, models, errors_ = initialize(times, observations,
                                                       fitter_fn, meow_ix,
                                                       meow_size)
-        print("ENDIX:" + str(end_ix))
+
+        print("{},{},{}".format(meow_ix, end_ix, len(times)))
 
         # Step 2: Extension
         end_ix, models, magnitudes_ = extend(end_ix, peek_size, times,
@@ -239,11 +263,9 @@ def detect(times, observations, fitter_fn, meow_size=16, peek_size=3, keep_all=F
         # Step 3: Always build a model for each step. This provides better diagnostics
         # for each timestep. The list of models can be filtered so that intermediate
         # results are preserved.
-
-        result = (times[meow_ix], times[end_ix], models, errors_, magnitudes_)
-
-        # add result as a second dim to top level results
-        results += (result,)
+        if (meow_ix is not None) and (end_ix is not None):
+            result = (times[meow_ix], times[end_ix], models, errors_, magnitudes_)
+            results += (result,)
 
         meow_ix = end_ix
 

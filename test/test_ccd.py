@@ -1,6 +1,7 @@
 import aniso8601
 import datetime
 import numpy as np
+import pytest
 import ccd.change as change
 
 from ccd.models import lasso
@@ -85,6 +86,7 @@ def test_not_enough_observations():
     reds = sinusoid(times)
     observations = np.array([reds])
     fitter_fn = lasso.fitted_model
+    # pytest.set_trace()
     models = change.detect(times, observations, fitter_fn)
     assert len(models) == 0
 
@@ -106,12 +108,11 @@ def test_enough_observations():
     greens = sinusoid(times)
     observations = np.array([reds, blues, greens])
     fitter_fn = lasso.fitted_model
+    # pytest.set_trace()
     models = change.detect(times, observations, fitter_fn)
     time_delta = times[-1]-times[1]
     assert time_delta > 365, "test data appears to be incorrect, {0} < 365?".format(time_delta)
     assert len(models) == 1, "actual: {}, expected: {}".format(len(models), 1)
-    assert len(models[0]) == 3, "actual: {}, expected: {}".format(len(models[0]), 3)
-
 
 def test_change_windows(n=50, meow_size=16, peek_size=3):
     times = acquisition_delta('R{0}/2000-01-01/P16D'.format(n))
