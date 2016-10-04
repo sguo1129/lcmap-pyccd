@@ -215,37 +215,25 @@ def detect(times, observations, fitter_fn, meow_size=16, peek_size=3, keep_all=F
             else:
                 break
 
-        # Determine peek_ix after initialization, this must be done after
-        # building the initial model because the window may slide if the
-        # initial observations are unstable.
-        peek_ix = meow_ix + end_ix
-
         # Step 2: EXTENSION.
         # The second step is to update a model until observations that do not
         # fit the model are found.
-        while (peek_ix+peek_size) <= len(times):
-            print("Peeking from {}..{}".format(peek_ix, peek_ix+peek_size))
-            next_moments = times[meow_ix:peek_ix + peek_size]
-            next_spectra = observations[:, meow_ix:peek_ix + peek_size]
+        while (end_ix+peek_size) <= len(times):
+            next_moments = times[meow_ix:end_ix + peek_size]
+            next_spectra = observations[:, meow_ix:end_ix + peek_size]
 
-            if accurate(models, next_moments, next_spectra):
-                print("Extending an accurate model.")
-                moments = times[meow_ix:peek_ix + peek_size]
-                spectra = observations[:, meow_ix:peek_ix + peek_size]
             magnitudes_ = magnitudes(models, next_moments, next_spectra)
             if accurate(magnitudes_):
+                moments = times[meow_ix:end_ix + peek_size]
+                spectra = observations[:, meow_ix:end_ix + peek_size]
                 models = [fitter_fn(moments, spectrum) for spectrum in spectra]
-                peek_ix += 1
+                end_ix += 1
             else:
-                print("{} peeked values do not fit, breaking extension.".format(peek_size))
                 break
 
-        # After exhausting observations that fit the initialized models,
-        # reposition the meow_ix to the starting point of the look-ahead
-        # so that initialization can begin again.
-        print("Accumulating model.")
         results.append(models)
-        meow_ix = peek_ix
+
+        meow_ix = end_ix
 
     if keep_all:
         return keeper
