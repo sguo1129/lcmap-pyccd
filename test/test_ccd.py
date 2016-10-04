@@ -104,7 +104,7 @@ def test_enough_observations():
     reds = sinusoid(times)
     blues = sinusoid(times)
     greens = sinusoid(times)
-    observations = np.array([reds,blues,greens])
+    observations = np.array([reds, blues, greens])
     fitter_fn = lasso.fitted_model
     models = change.detect(times, observations, fitter_fn)
     time_delta = times[-1]-times[1]

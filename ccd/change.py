@@ -132,13 +132,58 @@ def find_time_index(times, meow_ix, meow_size, day_delta = 365):
         else:  # try again!
             end_ix += 1
 
-def initialize():
-    """ TODO: """
-    pass
 
-def extend():
+def initialize(times, observations, fitter_fn, meow_ix, meow_size):
     """ TODO: """
-    pass
+    # Step 1: INITIALIZATION.
+    # The first step is to generate a model that is stable using only
+    # the minimum number of observations.
+    while (meow_ix+meow_size-1) <= len(times):
+
+        # Stretch observation window until it includes full year.
+        end_ix = find_time_index(times, meow_ix, meow_size)
+        if end_ix is None:
+            break
+
+        moments = times[meow_ix:end_ix]
+        spectra = observations[:, meow_ix:end_ix]
+        models = [fitter_fn(moments, spectrum) for spectrum in spectra]
+
+        # If a model is not stable, then it is possible that a disturbance
+        # exists somewhere in the observation window. The window shifts
+        # forward in time, and begins initialization again.
+        errors_ = rmse(models, moments, spectra)
+        if not stable(errors_):
+            meow_ix += 1
+        else:
+            break
+
+    return errors_, meow_ix, end_ix, models
+
+
+def extend(end_ix, peek_size, times, observations, meow_ix, fitter_fn, models):
+    """ TODO: """
+    # Step 2: EXTENSION.
+    # The second step is to update a model until observations that do not
+    # fit the model are found.
+
+    if end_ix is None:
+        return end_ix, None, None
+
+    while end_ix+peek_size <= len(times):
+        next_moments = times[meow_ix:end_ix + peek_size]
+        next_spectra = observations[:, meow_ix:end_ix + peek_size]
+
+        magnitudes_ = magnitudes(models, next_moments, next_spectra)
+        if accurate(magnitudes_):
+            moments = times[meow_ix:end_ix + peek_size]
+            spectra = observations[:, meow_ix:end_ix + peek_size]
+            models = [fitter_fn(moments, spectrum) for spectrum in spectra]
+            end_ix += 1
+        else:
+            break
+
+    return end_ix, models, magnitudes_
 
 
 def detect(times, observations, fitter_fn, meow_size=16, peek_size=3, keep_all=False):
@@ -180,48 +225,16 @@ def detect(times, observations, fitter_fn, meow_size=16, peek_size=3, keep_all=F
     # it will become None.
     while (meow_ix is not None) and (meow_ix+meow_size-1) <= len(times):
 
-        # These three variables are assigned during initializaiton and extension;
-        # this ensures they are defined even if a step cannot run.
-        models, errors_, magnitudes_ = None, None, None
+        # Step 1: initialize
+        errors_, meow_ix, end_ix, models = initialize(times, observations,
+                                                      fitter_fn, meow_ix,
+                                                      meow_size)
+        print("ENDIX:" + str(end_ix))
 
-        # Step 1: INITIALIZATION.
-        # The first step is to generate a model that is stable using only
-        # the minimum number of observations.
-        while (meow_ix+meow_size-1) <= len(times):
-
-            # Stretch observation window until it includes full year.
-            end_ix = find_time_index(times, meow_ix, meow_size)
-            if end_ix is None:
-                break
-
-            moments = times[meow_ix:end_ix]
-            spectra = observations[:, meow_ix:end_ix]
-            models = [fitter_fn(moments, spectrum) for spectrum in spectra]
-
-            # If a model is not stable, then it is possible that a disturbance
-            # exists somewhere in the observation window. The window shifts
-            # forward in time, and begins initialization again.
-            errors_ = rmse(models, moments, spectra)
-            if not stable(errors_):
-                meow_ix += 1
-            else:
-                break
-
-        # Step 2: EXTENSION.
-        # The second step is to update a model until observations that do not
-        # fit the model are found.
-        while (end_ix is not None) and (end_ix+peek_size) <= len(times):
-            next_moments = times[meow_ix:end_ix + peek_size]
-            next_spectra = observations[:, meow_ix:end_ix + peek_size]
-
-            magnitudes_ = magnitudes(models, next_moments, next_spectra)
-            if accurate(magnitudes_):
-                moments = times[meow_ix:end_ix + peek_size]
-                spectra = observations[:, meow_ix:end_ix + peek_size]
-                models = [fitter_fn(moments, spectrum) for spectrum in spectra]
-                end_ix += 1
-            else:
-                break
+        # Step 2: Extension
+        end_ix, models, magnitudes_ = extend(end_ix, peek_size, times,
+                                             observations, meow_ix,
+                                             fitter_fn, models)
 
         # Step 3: Always build a model for each step. This provides better diagnostics
         # for each timestep. The list of models can be filtered so that intermediate
