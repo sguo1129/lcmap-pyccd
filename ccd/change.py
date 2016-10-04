@@ -120,9 +120,7 @@ def find_time_index(times, meow_ix, meow_size, day_delta = 365):
     if times[-1] - times[meow_ix] < day_delta:
         return None
 
-    # Array index is zero based, so the the end index needs to be
-    # subtracted by one.
-    end_ix = meow_ix + meow_size - 1
+    end_ix = meow_ix + meow_size
 
     # This seems pretty naive, if you can think of something more
     # performant and elegant, have at it!
@@ -138,7 +136,11 @@ def initialize(times, observations, fitter_fn, meow_ix, meow_size):
     # Step 1: INITIALIZATION.
     # The first step is to generate a model that is stable using only
     # the minimum number of observations.
-    while (meow_ix+meow_size-1) <= len(times):
+
+    if meow_ix + meow_size <= len(times):
+        return None, None, None, None
+
+    while (meow_ix + meow_size) <= len(times):
 
         # Stretch observation window until it includes full year.
         end_ix = find_time_index(times, meow_ix, meow_size)
