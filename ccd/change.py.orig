@@ -36,8 +36,13 @@ def rmse(models, moments, spectra):
         matrix = lasso.coefficient_matrix(moments)
         predictions = model.predict(matrix)
         # TODO (jmorton): VERIFY CORRECTNESS
+<<<<<<< HEAD
+        error = \
+            np.linalg.norm(predictions - observed) / np.sqrt(len(predictions))
+=======
         error = (np.linalg.norm(predictions - observed) /
                  np.sqrt(len(predictions)))
+>>>>>>> origin/topic/detect
         errors.append(error)
     return errors
 
@@ -178,11 +183,6 @@ def initialize(times, observations, fitter_fn, meow_ix, meow_size,
 
     return meow_ix, end_ix, models, errors_
 
-"""
-  meow_ix   end_ix     peek_ix
-  V              V     V
-[ ..............0.1.2.3....... ]
-"""
 
 def extend(end_ix, peek_size, times, observations, meow_ix, fitter_fn, models):
     """ TODO: """
