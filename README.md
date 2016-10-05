@@ -20,28 +20,28 @@ user@dev:/home/user/pyccd$ . .venv/bin/activate
 
 The rest of the command prompts are truncated to ```$``` for readability, but assume an activated virtual environment and pwd as above, or that you know what you are doing.
 
-Clone the repo
+##### Clone the repo
 ```bash
 $ git clone https://github.com/davidvhill/pyccd.git
 ```
 
-Install test dependencies
+##### Install test dependencies
 ```bash
 $ pip install -e .[test]
 ```
-Run the tests
+##### Run the tests
 ```bash
 $ pytest
 $ pytest --profile
 $ pytest --profile-svg
 ```
 
-Run via command line
+##### Run via command line
 ```bash
 $ python ./ccd/cli.py
 ```
 
-Developing pyccd
+##### Developing pyccd
 
 app.py
 
@@ -77,7 +77,7 @@ Performance TODO
 * employ @lrucache
 
 
-Reference & Links
+##### Reference & Links
 
 ATBD
 1. Obtain minimum number of clear observations
