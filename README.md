@@ -3,8 +3,14 @@
 ## Purpose
 pyccd exists to provide the simplest possible implementation of ccd.
 
+
 ## System Requirements
-python3-dev (ubuntu) or python3-devel (centos) for sklearn
+* python3-dev (ubuntu) or python3-devel (centos)
+* gfortran 
+* libopenblas-dev 
+* liblapack-dev
+* graphviz
+
 
 ## Getting Started
 It's highly recommended to create a virtual environment to perform all
@@ -16,35 +22,52 @@ user@dev:/home/user/pyccd$ virtualenv -p python3 .venv
 user@dev:/home/user/pyccd$ . .venv/bin/activate
 (.venv) user@dev:/home/user/pyccd$
 ```
+
+All following commands assume an activated virtual environment and pwd as above.  Command prompt is truncated to ```$``` for readability.
+
+
 ### Get the code
 ```bash
-(.venv) user@dev:/home/user/pyccd$ git clone https://github.com/davidvhill/pyccd.git
+$ git clone https://github.com/davidvhill/pyccd.git
 ```
+
 ### Developing
 Install development dependencies.
 ```bash
-(.venv) user@dev:/home/user/pyccd$ pip install -e .[dev]
+$ pip install -e .[dev]
 ```
+
 ### Testing
 Install test dependencies.
 ```bash
-(.venv) user@dev:/home/user/pyccd$ pip install -e .[test]
+$ pip install -e .[test]
 ```
 
 Run the tests.
 ```bash
-(.venv) user@dev:/home/user/pyccd$ python setup.py test
+$ python setup.py test
 ```
 
 Alternatively.
 ```bash
-(.venv) user@dev:/home/user/pyccd$ pytest
+$ pytest
+```
+
+## Profiling
+```bash
+$ pytest --profile
+```
+
+Or if an output svg if preferred:
+```bash
+$ pytest --profile-svg
 ```
 
 ## Performance TODO
 * optimize data structures (numpy)
 * use pypy
 * employ @lrucache
+
 
 ## References
 

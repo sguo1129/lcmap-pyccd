@@ -1,3 +1,4 @@
+prof/*
 .cache/
 *.eggs/*
 pyccd.egg-info/*
