@@ -19,3 +19,8 @@ See ccd.cli.py, setup.py and the click/click-plugin documentation.
 
 
 #### logging
+
+## Performance TODO
+* optimize data structures (numpy)
+* use pypy
+* employ @lrucache
