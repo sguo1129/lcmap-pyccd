@@ -24,18 +24,18 @@ user@dev:/home/user/pyccd$ . .venv/bin/activate
 All following commands assume an activated virtual environment and pwd as above.  Command prompt is truncated to ```$``` for readability.
 
 
-### Get the code
+#### Get the code
 ```bash
 $ git clone https://github.com/davidvhill/pyccd.git
 ```
 
-### Installation
+#### Installing
 Install test dependencies.
 ```bash
 $ pip install -e .[test]
 ```
 
-Run the tests.
+#### Testing & Profiling
 ```bash
 $ python setup.py test
 ```
@@ -45,23 +45,17 @@ Alternatively.
 $ pytest
 ```
 
-### Profiling
+Basic testing with profiling enabled
 ```bash
 $ pytest --profile
 ```
 
-Or if an output svg if preferred:
+If an output svg if preferred (useful for performance analysis & optimization):
 ```bash
 $ pytest --profile-svg
 ```
 ### Running via command-line
 python ./ccd/cli.py
-
-### Performance TODO
-* optimize data structures (numpy)
-* use pypy
-* employ @lrucache
-
 
 ### Developing pyccd
 
@@ -76,19 +70,27 @@ cli commands to also be designated as entry point scripts.
 
 See ccd.cli.py, setup.py and the click/click-plugin documentation.
 
-[Click Docs](http://click.pocoo.org/5/)
-
-[Click On Github](https://github.com/pallets/click)
-
-[Click on PyPi](https://pypi.python.org/pypi/click)
-
-[Click-Plugins on Github](https://github.com/click-contrib/click-plugins)
-
-[Click-Plugins on PyPi](https://pypi.python.org/pypi/click-plugins)
+* [Click Docs](http://click.pocoo.org/5/)
+* [Click On Github](https://github.com/pallets/click)
+* [Click on PyPi](https://pypi.python.org/pypi/click)
+* [Click-Plugins on Github](https://github.com/click-contrib/click-plugins)
+* [Click-Plugins on PyPi](https://pypi.python.org/pypi/click-plugins)
 
 
 #### logging
+Basic Python logging is used in pyccd and is fully configured in app.py.  To use logging in any module:
+```python
+from ccd import app
 
+logger = app.logger.getLogger(__name__)
+logger.info("info level message")
+...
+```
+
+#### Performance TODO
+* optimize data structures (numpy)
+* use pypy
+* employ @lrucache
 
 ### References
 
@@ -104,12 +106,8 @@ See ccd.cli.py, setup.py and the click/click-plugin documentation.
 
 * Outliers are flagged and omitted from the regression fitting
 
-### [Test Data](docs/TestData.md)
-
-### [Reference Implementation](https://github.com/USGS-EROS/matlab-ccdc/blob/master/TrendSeasonalFit_v12_30ARDLine.m)
-
-### [Landsat Band Specifications](http://landsat.usgs.gov/band_designations_landsat_satellites.php)
-
-### [Landsat 8 Surface Reflectance Specs](http://landsat.usgs.gov/documents/provisional_lasrc_product_guide.pdf)
-
-### [Landsat 4-7 Surface Reflectance Specs](http://landsat.usgs.gov/documents/cdr_sr_product_guide.pdf)
+* [Test Data](docs/TestData.md)
+* [Reference Implementation](https://github.com/USGS-EROS/matlab-ccdc/blob/master/TrendSeasonalFit_v12_30ARDLine.m)
+* [Landsat Band Specifications](http://landsat.usgs.gov/band_designations_landsat_satellites.php)
+* [Landsat 8 Surface Reflectance Specs](http://landsat.usgs.gov/documents/provisional_lasrc_product_guide.pdf)
+* [Landsat 4-7 Surface Reflectance Specs](http://landsat.usgs.gov/documents/cdr_sr_product_guide.pdf)
