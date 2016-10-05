@@ -1,18 +1,15 @@
 # PyCCD - Python Continuous Change Detection
 pyccd exists to provide the simplest possible implementation of ccd.
 
-### Getting Started
-
-#### System Requirements
+##### Getting Started
+System requirements for PyCCD
 * python3-dev (ubuntu) or python3-devel (centos)
 * gfortran
 * libopenblas-dev
 * liblapack-dev
 * graphviz
 
-
-It's highly recommended to create a virtual environment to perform all
-your development and testing.
+It's highly recommended to do all your development & testing in a virtual environment.
 ```bash
 user@dev:/home/user/$ mkdir pyccd
 user@dev:/home/user/$ cd pyccd
@@ -21,47 +18,34 @@ user@dev:/home/user/pyccd$ . .venv/bin/activate
 (.venv) user@dev:/home/user/pyccd$
 ```
 
-All following commands assume an activated virtual environment and pwd as above.  Command prompt is truncated to ```$``` for readability.
+The rest of the command prompts are truncated to ```$``` for readability, but assume an activated virtual environment and pwd as above, or that you know what you are doing.
 
-
-#### Get the code
+Clone the repo
 ```bash
 $ git clone https://github.com/davidvhill/pyccd.git
 ```
 
-#### Installing
-Install test dependencies.
+Install test dependencies
 ```bash
 $ pip install -e .[test]
 ```
-
-#### Testing & Profiling
-```bash
-$ python setup.py test
-```
-
-Alternatively.
+Run the tests
 ```bash
 $ pytest
-```
-
-Basic testing with profiling enabled
-```bash
 $ pytest --profile
-```
-
-If an output svg if preferred (useful for performance analysis & optimization):
-```bash
 $ pytest --profile-svg
 ```
-### Running via command-line
-python ./ccd/cli.py
 
-### Developing pyccd
+Run via command line
+```bash
+$ python ./ccd/cli.py
+```
 
-#### app.py
+Developing pyccd
 
-#### cli.py and entry_point scripts
+app.py
+
+cli.py and entry_point scripts
 The command line interface is implemented using the click project, which
 provides decorators for functions that become command line arguments.
 
@@ -77,7 +61,7 @@ See ccd.cli.py, setup.py and the click/click-plugin documentation.
 * [Click-Plugins on PyPi](https://pypi.python.org/pypi/click-plugins)
 
 
-#### logging
+logging
 Basic Python logging is used in pyccd and is fully configured in app.py.  To use logging in any module:
 ```python
 from ccd import app
@@ -87,14 +71,15 @@ logger.info("info level message")
 ...
 ```
 
-#### Performance TODO
+Performance TODO
 * optimize data structures (numpy)
 * use pypy
 * employ @lrucache
 
-### References
 
-#### ATBD
+Reference & Links
+
+ATBD
 1. Obtain minimum number of clear observations
 2. Run regression against this set (n)
 3. Continue adding observations
@@ -103,10 +88,9 @@ logger.info("info level message")
    and a new regression model is started.
 5. If next three observations are not outside the range, an outlier has
     has been detected.
-
 * Outliers are flagged and omitted from the regression fitting
 
-#### Links
+Links
 * [Test Data](docs/TestData.md)
 * [Reference Implementation](https://github.com/USGS-EROS/matlab-ccdc/blob/master/TrendSeasonalFit_v12_30ARDLine.m)
 * [Landsat Band Specifications](http://landsat.usgs.gov/band_designations_landsat_satellites.php)
