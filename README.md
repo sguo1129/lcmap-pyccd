@@ -4,9 +4,14 @@
 pyccd exists to provide the simplest possible implementation of ccd.
 
 ## System Requirements
-python3-dev (ubuntu) or python3-devel (centos) for sklearn
+#### For sklearn
+python3-dev (ubuntu) or python3-devel (centos)
+gfortran 
+libopenblas-dev 
+liblapack-dev
 
-graphviz for svg output of profiling
+#### For pytest --profile-svg
+graphviz
 
 ## Getting Started
 It's highly recommended to create a virtual environment to perform all
