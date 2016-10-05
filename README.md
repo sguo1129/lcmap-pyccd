@@ -3,15 +3,14 @@
 ## Purpose
 pyccd exists to provide the simplest possible implementation of ccd.
 
+
 ## System Requirements
-#### For sklearn
 * python3-dev (ubuntu) or python3-devel (centos)
 * gfortran 
 * libopenblas-dev 
 * liblapack-dev
-
-#### For pytest --profile-svg
 * graphviz
+
 
 ## Getting Started
 It's highly recommended to create a virtual environment to perform all
@@ -26,15 +25,18 @@ user@dev:/home/user/pyccd$ . .venv/bin/activate
 
 All following commands assume an activated virtual environment and pwd as above.  Command prompt is truncated to ```$``` for readability.
 
+
 ### Get the code
 ```bash
 $ git clone https://github.com/davidvhill/pyccd.git
 ```
+
 ### Developing
 Install development dependencies.
 ```bash
 $ pip install -e .[dev]
 ```
+
 ### Testing
 Install test dependencies.
 ```bash
@@ -65,6 +67,7 @@ $ pytest --profile-svg
 * optimize data structures (numpy)
 * use pypy
 * employ @lrucache
+
 
 ## References
 
