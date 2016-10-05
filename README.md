@@ -1,8 +1,9 @@
 # PyCCD - Python Continuous Change Detection
 pyccd exists to provide the simplest possible implementation of ccd.
 
+### Getting Started
 
-### System Requirements
+#### System Requirements
 * python3-dev (ubuntu) or python3-devel (centos)
 * gfortran
 * libopenblas-dev
@@ -10,7 +11,6 @@ pyccd exists to provide the simplest possible implementation of ccd.
 * graphviz
 
 
-### Getting Started
 It's highly recommended to create a virtual environment to perform all
 your development and testing.
 ```bash
