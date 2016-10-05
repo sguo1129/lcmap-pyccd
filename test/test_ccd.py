@@ -55,18 +55,6 @@ def acquisition_delta(interval):
     return list(*gen_acquisition_delta(interval))
 
 
-def read_csv_sample(path):
-    """Load a sample file containing acquisition days and spectral values.
-
-    Args:
-        path: location of CSV containing test data
-
-    Returns:
-        A 2D numpy array.
-    """
-    return np.genfromtxt('test/resources/sample_1.csv', delimiter=',')
-
-
 def sinusoid(times, frequency=1, amplitude=0.1, seed=42):
     """Produce a sinusoidal wave for testing data"""
     np.random.seed(seed)
