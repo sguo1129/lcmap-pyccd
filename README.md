@@ -94,7 +94,7 @@ logger.info("info level message")
 
 ### References
 
-### ATBD
+#### ATBD
 1. Obtain minimum number of clear observations
 2. Run regression against this set (n)
 3. Continue adding observations
@@ -106,6 +106,7 @@ logger.info("info level message")
 
 * Outliers are flagged and omitted from the regression fitting
 
+#### Links
 * [Test Data](docs/TestData.md)
 * [Reference Implementation](https://github.com/USGS-EROS/matlab-ccdc/blob/master/TrendSeasonalFit_v12_30ARDLine.m)
 * [Landsat Band Specifications](http://landsat.usgs.gov/band_designations_landsat_satellites.php)
