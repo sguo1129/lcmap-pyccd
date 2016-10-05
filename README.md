@@ -18,39 +18,42 @@ user@dev:/home/user/pyccd$ virtualenv -p python3 .venv
 user@dev:/home/user/pyccd$ . .venv/bin/activate
 (.venv) user@dev:/home/user/pyccd$
 ```
+
+All following commands assume an activated virtual environment and pwd as above.  Command prompt is truncated to ```$``` for readability.
+
 ### Get the code
 ```bash
-(.venv) user@dev:/home/user/pyccd$ git clone https://github.com/davidvhill/pyccd.git
+$ git clone https://github.com/davidvhill/pyccd.git
 ```
 ### Developing
 Install development dependencies.
 ```bash
-(.venv) user@dev:/home/user/pyccd$ pip install -e .[dev]
+$ pip install -e .[dev]
 ```
 ### Testing
 Install test dependencies.
 ```bash
-(.venv) user@dev:/home/user/pyccd$ pip install -e .[test]
+$ pip install -e .[test]
 ```
 
 Run the tests.
 ```bash
-(.venv) user@dev:/home/user/pyccd$ python setup.py test
+$ python setup.py test
 ```
 
 Alternatively.
 ```bash
-(.venv) user@dev:/home/user/pyccd$ pytest
+$ pytest
 ```
 
 ## Profiling
 ```bash
-(.venv) user@dev:/home/user/pyccd$ pytest --profile
+$ pytest --profile
 ```
 
 Or if an output svg if preferred:
 ```bash
-(.venv) user@dev:/home/user/pyccd$ pytest --profile-svg
+$ pytest --profile-svg
 ```
 
 ## Performance TODO
