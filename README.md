@@ -1,7 +1,17 @@
 # PyCCD - Python Continuous Change Detection
 pyccd exists to provide the simplest possible implementation of ccd.
 
-##### Getting Started
+## Using PyCCD
+```python
+insert python usage here
+...
+...
+...
+...
+...
+```
+
+## Installing
 System requirements for PyCCD
 * python3-dev (ubuntu) or python3-devel (centos)
 * gfortran
@@ -29,7 +39,8 @@ $ git clone https://github.com/davidvhill/pyccd.git
 ```bash
 $ pip install -e .[test]
 ```
-##### Run the tests
+
+## Testing & Running
 ```bash
 $ pytest
 $ pytest --profile
@@ -41,7 +52,14 @@ $ pytest --profile-svg
 $ python ./ccd/cli.py
 ```
 
-##### Developing pyccd
+Entry point scripts: pyccd
+
+## Contributing
+Contributions to pyccd are most welcome, just be sure to thoroughly review the guidelines first.
+
+[Contributing](docs/CONTRIBUTING.md)
+
+[Developers Guide](docs/DEVELOPING.md)
 
 app.py
 
@@ -77,7 +95,7 @@ Performance TODO
 * employ @lrucache
 
 
-##### Reference & Links
+## Reference & Links
 
 ATBD
 1. Obtain minimum number of clear observations
