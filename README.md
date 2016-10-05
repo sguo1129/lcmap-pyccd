@@ -48,9 +48,10 @@ $ pytest --profile-svg
 ```
 
 ##### Running via command-line
-python ./ccd/cli.py
-
-Entry point scripts: pyccd
+```bash
+$python ./ccd/cli.py
+$ pyccd
+```
 
 ## Contributing
 Contributions to pyccd are most welcome, just be sure to thoroughly review the guidelines first.
