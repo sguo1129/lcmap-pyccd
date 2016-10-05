@@ -75,7 +75,8 @@ setup(
                       'scipy',
                       'numpy>=1.6',
                       'cachetools>=2.0.0',
-                      'click'],
+                      'click',
+                      'click-plugins>=1.0.3'],
 
     # List additional groups of dependencies here (e.g. development
     # dependencies). You can install these using the following syntax,
@@ -106,9 +107,10 @@ setup(
     # To provide executable scripts, use entry points in preference to the
     # "scripts" keyword. Entry points provide cross-platform support and allow
     # pip to create the appropriate form of executable for the target platform.
-    entry_points={
-        'console_scripts': [
-            'ccd=cli:main',
-        ],
-    },
+    # entry_points={'console_scripts': ['pyccd-detect=ccd.cli:detect', ], },
+    entry_points='''
+        [core_package.cli_plugins]
+        subcommand=ccd.cli:subcommand
+        another_subcommand=ccd.cli:another_subcommand
+    ''',
 )

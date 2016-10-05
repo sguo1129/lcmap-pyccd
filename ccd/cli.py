@@ -2,17 +2,30 @@
 """ Command line interface to Python Continuous Change Detection. """
 
 from ccd import app
+from click_plugins import with_plugins
+from pkg_resources import iter_entry_points
 import click
 
 logger = app.logging.getLogger(__name__)
 
 
-@click.command()
-@click.option('--count', default=1, help='Number of greetings.')
-@click.option('--name', prompt='Your name',
-              help='The person to greet.')
-def detect(count, name):
-    logger.info("CLI running {0} times for {1}".format(count, name))
+@with_plugins(iter_entry_points('core_package.cli_plugins'))
+@click.group()
+def cli():
+    """Commandline interface for yourpackage."""
+    logger.info("CLI running...")
+
+
+@cli.command()
+def subcommand():
+    """Subcommand that does something."""
+    logger.info("Subcommand running...")
+
+
+@cli.command()
+def another_subcommand():
+    """Another Subcommand that does something."""
+    logger.info("Another Subcommand running...")
 
 if __name__ == '__main__':
-    detect()
+    cli()
