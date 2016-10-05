@@ -49,7 +49,7 @@ $ pytest --profile-svg
 
 ##### Running via command-line
 ```bash
-$python ./ccd/cli.py
+$ python ./ccd/cli.py
 $ pyccd
 ```
 
