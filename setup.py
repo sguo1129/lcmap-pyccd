@@ -71,17 +71,17 @@ setup(
     # your project is installed. For an analysis of "install_requires" vs pip's
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
-    install_requires=['scikit-learn>=0.17.1',
+    install_requires=['numpy>=1.6',
                       'scipy',
-                      'numpy>=1.6'],
+                      'scikit-learn>=0.17.1'],
 
     # List additional groups of dependencies here (e.g. development
     # dependencies). You can install these using the following syntax,
     # for example:
     # $ pip install -e .[dev,test]
     extras_require={
-        'dev': [],
-        'test': ['coverage>=4.2', 'pytest>=3.0.2', 'aniso8601>=1.1.0'],
+        'test': ['flake8', 'pytest-profiling', 'coverage>=4.2',
+                 'pytest>=3.0.2', 'aniso8601>=1.1.0'],
     },
 
     setup_requires=['pytest-runner', 'pip'],
