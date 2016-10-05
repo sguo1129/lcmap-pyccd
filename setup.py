@@ -74,15 +74,16 @@ setup(
     install_requires=['scikit-learn>=0.17.1',
                       'scipy',
                       'numpy>=1.6',
-                      'cachetools>=2.0.0'],
+                      'cachetools>=2.0.0',
+                      'click'],
 
     # List additional groups of dependencies here (e.g. development
     # dependencies). You can install these using the following syntax,
     # for example:
     # $ pip install -e .[dev,test]
     extras_require={
-        'test': ['flake8', 'pytest-profiling>=1.1.1', 
-                 'coverage>=4.2', 'pytest>=3.0.2', 
+        'test': ['flake8', 'pytest-profiling>=1.1.1',
+                 'coverage>=4.2', 'pytest>=3.0.2',
                  'aniso8601>=1.1.0', 'gprof2dot'],
     },
 
