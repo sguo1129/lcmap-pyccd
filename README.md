@@ -1,10 +1,8 @@
 # PyCCD - Python Continuous Change Detection
-
-## Purpose
 pyccd exists to provide the simplest possible implementation of ccd.
 
 
-## System Requirements
+### System Requirements
 * python3-dev (ubuntu) or python3-devel (centos)
 * gfortran
 * libopenblas-dev
@@ -12,7 +10,7 @@ pyccd exists to provide the simplest possible implementation of ccd.
 * graphviz
 
 
-## Getting Started
+### Getting Started
 It's highly recommended to create a virtual environment to perform all
 your development and testing.
 ```bash
@@ -31,13 +29,7 @@ All following commands assume an activated virtual environment and pwd as above.
 $ git clone https://github.com/davidvhill/pyccd.git
 ```
 
-### Developing
-Install development dependencies.
-```bash
-$ pip install -e .[dev]
-```
-
-### Testing
+### Installation
 Install test dependencies.
 ```bash
 $ pip install -e .[test]
@@ -53,7 +45,7 @@ Alternatively.
 $ pytest
 ```
 
-## Profiling
+### Profiling
 ```bash
 $ pytest --profile
 ```
@@ -62,16 +54,16 @@ Or if an output svg if preferred:
 ```bash
 $ pytest --profile-svg
 ```
+### Running via command-line
+python ./ccd/cli.py
 
-## Performance TODO
+### Performance TODO
 * optimize data structures (numpy)
 * use pypy
 * employ @lrucache
 
-## Running via command-line
-python ./ccd/cli.py
 
-## Developing
+### Developing pyccd
 
 #### app.py
 
@@ -97,7 +89,8 @@ See ccd.cli.py, setup.py and the click/click-plugin documentation.
 
 #### logging
 
-## References
+
+### References
 
 ### ATBD
 1. Obtain minimum number of clear observations
