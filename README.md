@@ -5,7 +5,7 @@ pyccd exists to provide the simplest possible implementation of ccd.
 ```python
 >>> import ccd
 >>> results = ccd.detect(dates, reds, greens, blues, nirs, swir1s, swir2s, thermals, qas)
->>> 
+>>>
 >>> type(results)
 tuple
 >>>
@@ -81,6 +81,9 @@ $ pip install -e .[test]
 $ pytest
 $ pytest --profile
 $ pytest --profile-svg
+
+# pytest-watch
+$ ptw 
 ```
 
 ##### Running via command-line
