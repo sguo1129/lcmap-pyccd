@@ -38,11 +38,7 @@ collections.namedtuple
              swir2 =   (magnitudes=float,
                         rmse=float,
                         coefficients=(float, float, ...),
-                        intercept=float),
-             thermal = (magnitudes=float,
-                        rmse=float,
-                        coefficients=(float, float, ...),
-                        intercept=float),
+                        intercept=float)
             ),
         )
 ```
@@ -83,7 +79,7 @@ $ pytest --profile
 $ pytest --profile-svg
 
 # pytest-watch
-$ ptw 
+$ ptw
 ```
 
 ##### Running via command-line
