@@ -46,11 +46,18 @@ swir2:    {magnitudes:float,
 ```
 
 ## Installing
-System requirements for PyCCD
-* python3-dev (ubuntu) or python3-devel (centos)
+System requirements (Ubuntu)
+* python3-dev 
 * gfortran
 * libopenblas-dev
 * liblapack-dev
+* graphviz
+
+System requirements (Centos)
+* python3-devel
+* gfortran
+* blas-dev
+* lapack-dev
 * graphviz
 
 It's highly recommended to do all your development & testing in a virtual environment.
