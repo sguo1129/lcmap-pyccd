@@ -47,7 +47,7 @@ swir2:    {magnitude:float,
 
 ## Installing
 System requirements (Ubuntu)
-* python3-dev 
+* python3-dev
 * gfortran
 * libopenblas-dev
 * liblapack-dev
@@ -103,6 +103,31 @@ Contributions to pyccd are most welcome, just be sure to thoroughly review the g
 
 [Developers Guide](docs/DEVELOPING.md)
 
+## Versions
+PyCCD versions comply with [PEP440](https://www.python.org/dev/peps/pep-0440/)
+and [Semantic Versioning](http://semver.org/), thus MAJOR.MINOR.PATCH.LABEL as
+defined by:
+> Given a version number MAJOR.MINOR.PATCH, increment the:
+
+> MAJOR version when you make incompatible API changes,
+> MINOR version when you add functionality in a backwards-compatible manner, and
+> PATCH version when you make backwards-compatible bug fixes.
+> Additional labels for pre-release and build metadata are available as extensions to the MAJOR.MINOR.PATCH format.
+
+Alpha releases (x.x.x.ax) indicate that the code functions but the result may
+or may not be correct.
+
+Beta releases (x.x.x.bx) indicate that the code functions and the results
+are believed to be correct by the developers but have not yet been verified.
+
+Release candidates (x.x.x.rcx) indicate that the code functions and the results
+are correct according to the developers and verifiers and is ready for final
+performance testing and system integration.
+
+Full version releases (x.x.x) indicate that the code functions, the results
+are verified to be correct and it has passed all testing and quality checks.
+
+PyCCD's version is defined by the ccd/__init__.py/__version__ attribute ONLY.
 
 ## References
 
