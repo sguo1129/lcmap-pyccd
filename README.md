@@ -130,7 +130,7 @@ performance testing and system integration.
 Full version releases (x.x.x) indicate that the code functions, the results
 are verified to be correct and it has passed all testing and quality checks.
 
-PyCCD's version is defined by the ccd/__init__.py/__version__ attribute ONLY.
+PyCCD's version is defined by the ```ccd/__init__.py/__version__``` attribute ONLY.
 
 ## References
 
