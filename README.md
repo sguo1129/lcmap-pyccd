@@ -125,7 +125,7 @@ are believed to be correct by the developers but have not yet been verified.
 
 Release candidates (x.x.x.rcx) indicate that the code functions and the results
 are correct according to the developers and verifiers and is ready for final
-performance testing and system integration.
+performance and acceptance testing.
 
 Full version releases (x.x.x) indicate that the code functions, the results
 are verified to be correct and it has passed all testing and quality checks.
